@@ -28,10 +28,7 @@ async function main() {
   const root = (ReactDOM as any).createRoot(appRoot);
   root.render(<MyComponent />);
 
-  // It's good practice to provide a cleanup function for your extension.
-  // This will be called when the extension is disabled or unloaded.
   return () => {
-    console.log("Unmounting Trashbin+ component.");
     root.unmount();
     appRoot.remove();
   };
