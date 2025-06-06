@@ -1,3 +1,5 @@
+import React from "react";
+
 async function main() {
   while (!Spicetify?.showNotification) {
     await new Promise((resolve) => setTimeout(resolve, 100));
@@ -6,6 +8,8 @@ async function main() {
   console.log("Spicetify is ready!");
   // Show message on start.
   Spicetify.showNotification("Hello!");
+
+  return <div>test</div>;
 }
 
 export default main;
