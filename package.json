@@ -2,12 +2,12 @@
   "name": "trashbin-plus",
   "version": "1.0.0",
   "private": true,
+  "license": "MIT",
   "scripts": {
     "build": "spicetify-creator",
     "build-local": "spicetify-creator --out=dist --minify",
     "dev": "concurrently \"spicetify-creator --watch\" \"spicetify watch -e\""
   },
-  "license": "MIT",
   "devDependencies": {
     "@types/react": "^19.1.6",
     "@types/react-dom": "^19.1.6",
