@@ -1,12 +1,9 @@
 import React from "react";
 import ReactDOM from "react-dom";
+import "./global.css";
 
 function MyComponent() {
-  return (
-    <div style={{ color: "white", margin: "1rem" }}>
-      My Test Component for Tr
-    </div>
-  );
+  return <div className="text-red-500">My Test Component for Tr</div>;
 }
 
 async function main() {
