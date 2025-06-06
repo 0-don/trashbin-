@@ -6,7 +6,7 @@
   "scripts": {
     "build": "spicetify-creator",
     "build-local": "spicetify-creator --out=dist --minify",
-    "dev": "yarn --force && concurrently \"spicetify-creator --watch\" \"spicetify watch -e\""
+    "dev": "concurrently \"spicetify-creator --watch\" \"spicetify watch -e\""
   },
   "devDependencies": {
     "@types/react": "^18.3.23",
