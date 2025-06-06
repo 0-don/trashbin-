@@ -24,11 +24,10 @@ async function main() {
 
   mainView.prepend(appRoot);
 
-  const root = (ReactDOM as any).createRoot(appRoot);
-  root.render(<MyComponent />);
+  ReactDOM.render(<MyComponent />, appRoot);
 
   return () => {
-    root.unmount();
+    ReactDOM.unmountComponentAtNode(appRoot);
     appRoot.remove();
   };
 }
