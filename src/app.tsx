@@ -1,7 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-// 1. Define your React component
 function MyComponent() {
   return (
     <div style={{ color: "white", margin: "1rem" }}>
@@ -14,7 +13,6 @@ async function main() {
   console.log("Spicetify is ready! Attaching Trashbin+ React component.");
   Spicetify.showNotification("Hello from Trashbin+!!!!");
 
-  // 2. Create a div to mount our component into
   const appRoot = document.createElement("div");
   appRoot.id = "trashbin-plus-root";
 
