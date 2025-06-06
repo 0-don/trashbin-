@@ -16,5 +16,5 @@
     "postcss": "^8.5.4",
     "tailwindcss": "^3.4.17",
     "spicetify-creator": "github:0-don/spicetify-creator"
-}
+  }
 }
