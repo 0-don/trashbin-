@@ -4,7 +4,7 @@ import ReactDOM from "react-dom";
 function MyComponent() {
   return (
     <div style={{ color: "white", margin: "1rem" }}>
-      My Test Component for Traasdasdhbin+!
+      My Test Component for Tr
     </div>
   );
 }
@@ -16,7 +16,6 @@ async function main() {
   const appRoot = document.createElement("div");
   appRoot.id = "trashbin-plus-root";
 
-  // 3. Find a place in the DOM to inject our div
   const mainView = document.querySelector(".main-view-container__scroll-node");
 
   if (!mainView) {
@@ -26,8 +25,6 @@ async function main() {
 
   mainView.prepend(appRoot);
 
-  // 4. Use ReactDOM to render our component into our div
-  // This will work because Spicetify.ReactDOM has the createRoot method.
   const root = (ReactDOM as any).createRoot(appRoot);
   root.render(<MyComponent />);
 
