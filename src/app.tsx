@@ -3,9 +3,7 @@ import ReactDOM from "react-dom";
 import "./global.css";
 
 function MyComponent() {
-  return (
-    <div className="text-red-500 !text-5xl">My Test Component for Tr</div>
-  );
+  return <div className="text-red-500 !text-5xl">My Test Component for Tr</div>;
 }
 
 async function main() {
@@ -26,6 +24,8 @@ async function main() {
 
   ReactDOM.render(<MyComponent />, appRoot);
 
+  Spicetify.Player.play();
+  
   return () => {
     ReactDOM.unmountComponentAtNode(appRoot);
     appRoot.remove();
