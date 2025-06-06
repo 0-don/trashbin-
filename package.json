@@ -8,15 +8,13 @@
     "dev": "concurrently \"spicetify-creator --watch\" \"spicetify watch -e\""
   },
   "license": "MIT",
-  "dependencies": {
-    "spicetify-creator": "^1.0.17"
-  },
   "devDependencies": {
     "@types/react": "^19.1.6",
     "@types/react-dom": "^19.1.6",
+    "autoprefixer": "^10.4.21",
     "concurrently": "^9.1.2",
-    "tailwindcss": "^4.1.8",
-    "@tailwindcss/postcss": "^4.1.8",
-    "postcss": "^8.5.4"
+    "postcss": "^8.5.4",
+    "tailwindcss": "^3.4.17",
+    "spicetify-creator": "^1.0.17"
   }
 }
