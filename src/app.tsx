@@ -4,7 +4,7 @@ import "./global.css";
 
 function MyComponent() {
   return (
-    <div className="!text-red-500 !text-5xl">My Test Component for Tr</div>
+    <div className="text-red-500 !text-5xl">My Test Component for Tr</div>
   );
 }
 
