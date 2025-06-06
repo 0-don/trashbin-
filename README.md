@@ -19,6 +19,3 @@ Check out [Spicetify's docs](https://spicetify.app/docs/development/spicetify-cr
 - https://github.com/spicetify/spicetify-creator
 
 ##
-
-terminal1: bun run dev
-terminal2: spicetify watch -e
