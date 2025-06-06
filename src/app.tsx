@@ -8,7 +8,7 @@ function MyComponent() {
 
 async function main() {
   console.log("Spicetify is ready! Attaching Trashbin+ React component.");
-  Spicetify.showNotification("Hello from Trashbin+!!!!");
+  Spicetify.showNotification("Helloasdin+!!!!");
 
   const appRoot = document.createElement("div");
   appRoot.id = "trashbin-plus-root";
@@ -25,7 +25,7 @@ async function main() {
   ReactDOM.render(<MyComponent />, appRoot);
 
   Spicetify.Player.play();
-  
+
   return () => {
     ReactDOM.unmountComponentAtNode(appRoot);
     appRoot.remove();
