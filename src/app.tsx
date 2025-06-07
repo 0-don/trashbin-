@@ -1,30 +1,52 @@
-import React from "react";
+import React, { useEffect } from "react";
 import ReactDOM from "react-dom";
+import { TrashbinWidget } from "./components/trashbin-widget";
 import "./global.css";
+import { useTrashbinStore } from "./store/trashbin-store";
+import { TrashbinContextMenu } from "./components/trashbin-context-menu.";
+import { TrashbinSettings } from "./components/trashbin-settings";
 
-function MyComponent() {
-  return <div className="text-red-950 text-xl!">My Test Component for Tr</div>;
+function App() {
+  const { initializeFromStorage, setCurrentTrack, trashbinEnabled } =
+    useTrashbinStore();
+
+  useEffect(() => {
+    // Initialize store from localStorage
+    initializeFromStorage();
+
+    // Set up player event listeners
+    const updateCurrentTrack = () => {
+      const track = Spicetify.Player.data?.item;
+      setCurrentTrack(track);
+    };
+
+    updateCurrentTrack();
+    Spicetify.Player.addEventListener("songchange", updateCurrentTrack);
+
+    return () => {
+      Spicetify.Player.removeEventListener("songchange", updateCurrentTrack);
+    };
+  }, [initializeFromStorage, setCurrentTrack]);
+
+  return (
+    <>
+      <TrashbinWidget />
+      <TrashbinSettings />
+      <TrashbinContextMenu />
+    </>
+  );
 }
 
 async function main() {
   console.log("Spicetify is ready! Attaching Trashbin+ React component.");
-  Spicetify.showNotification("Helloasdin+!!!!");
 
   const appRoot = document.createElement("div");
   appRoot.id = "trashbin-plus-root";
+  appRoot.className = "fixed top-0 left-0 z-50 pointer-events-none";
 
-  const mainView = document.querySelector(".main-view-container__scroll-node");
+  document.body.appendChild(appRoot);
 
-  if (!mainView) {
-    console.error("Could not find main view container to inject into.");
-    return;
-  }
-
-  mainView.prepend(appRoot);
-
-  ReactDOM.render(<MyComponent />, appRoot);
-
-  Spicetify.Player.play();
+  ReactDOM.render(<App />, appRoot);
 
   return () => {
     ReactDOM.unmountComponentAtNode(appRoot);

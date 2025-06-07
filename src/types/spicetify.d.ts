@@ -1239,7 +1239,7 @@ declare namespace Spicetify {
 			 * List of valid icons to use.
 			 */
 			static readonly iconList: Icon[];
-			constructor(name: string, onClick: OnClickCallback, shouldAdd?: ShouldAddCallback, icon?: Icon, disabled?: boolean);
+			constructor(name: string, onClick: OnClickCallback, shouldAdd?: ShouldAddCallback, icon?: Icon | string, disabled?: boolean);
 			name: string;
 			icon: Icon | string;
 			disabled: boolean;
