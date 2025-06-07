@@ -60,7 +60,7 @@ const shouldSkipCurrentTrack = (uri: string, type: string) => {
     let artUri = curTrack.metadata?.artist_uri;
     while (artUri) {
       if (uri === artUri) return true;
-      artUri = curTrack.metadata?.[`artist_uri:${count}`];
+      artUri = (curTrack.metadata as any)?.[`artist_uri:${count}`];
       count++;
     }
   }
