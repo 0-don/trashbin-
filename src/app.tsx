@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import ReactDOM from "react-dom";
-import { TrashbinContextMenu } from "./components/trashbin-context-menu.";
+import { TrashbinContextMenu } from "./components/trashbin-context-menu";
 import { TrashbinSettings } from "./components/trashbin-settings";
 import { TrashbinWidget } from "./components/trashbin-widget";
 import "./global.css";
