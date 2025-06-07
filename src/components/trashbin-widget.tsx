@@ -96,6 +96,6 @@ export const TrashbinWidget: React.FC = () => {
     }
   }, [trashbinStore.widgetEnabled, trashbinStore.trashbinEnabled]);
 
-  // This component manages the native widget - doesn't render anything in React
+
   return null;
 };

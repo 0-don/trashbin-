@@ -204,7 +204,7 @@ export function TrashbinSettings() {
       ?.addEventListener("click", clearTrashbin);
 
     const menuItem = new Spicetify.Menu.Item(
-      "Trashbin",
+      "Trashbin Plus",
       false,
       () => {
         Spicetify.PopupModal.display({
