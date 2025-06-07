@@ -3,7 +3,7 @@ import ReactDOM from "react-dom";
 import "./global.css";
 
 function MyComponent() {
-  return <div className="text-red-950 !text-xl">My Test Component for Tr</div>;
+  return <div className="text-red-950 text-xl!">My Test Component for Tr</div>;
 }
 
 async function main() {
