@@ -14,11 +14,34 @@ function App() {
   }, []);
 
   useEffect(() => {
+    const skipBackBtn =
+      document.querySelector(".main-skipBackButton-button") ??
+      document.querySelector(
+        ".player-controls__left > button[data-encore-id='buttonTertiary']",
+      );
+
+    const eventListener = () => trashbinStore.setUserHitBack(true);
+
+    if (skipBackBtn && trashbinStore.trashbinEnabled) {
+      skipBackBtn.addEventListener("click", eventListener);
+      return () => {
+        skipBackBtn.removeEventListener("click", eventListener);
+      };
+    }
+  }, [trashbinStore.trashbinEnabled]);
+
+  useEffect(() => {
     const handleSongChange = () => {
       const track = Spicetify.Player.data?.item;
 
       // Always update current track
       trashbinStore.setCurrentTrack(track);
+
+      // Check if user hit back button - if so, don't auto-skip
+      if (trashbinStore.userHitBack) {
+        trashbinStore.setUserHitBack(false);
+        return;
+      }
 
       // Only auto-skip if trashbin is enabled
       if (!track || !trashbinStore.trashbinEnabled) return;
