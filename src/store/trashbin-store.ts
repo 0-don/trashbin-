@@ -1,248 +1,246 @@
 import { create } from "zustand";
-import { subscribeWithSelector } from "zustand/middleware";
 
-export type useTrashbinStore = {
-  // Data
-  trashSongList: Record<string, boolean>;
-  trashArtistList: Record<string, boolean>;
-
-  // Settings
+interface TrashbinState {
+  // Core state
   trashbinEnabled: boolean;
   widgetEnabled: boolean;
-
-  // UI State
-  isSettingsOpen: boolean;
+  trashSongList: Record<string, boolean>;
+  trashArtistList: Record<string, boolean>;
   currentTrack: any;
+  userHitBack: boolean;
 
   // Actions
-  addToTrash: (uri: string, type: string) => void;
-  removeFromTrash: (uri: string, type: string) => void;
-  isInTrash: (uri: string, type: string) => boolean;
-  clearTrash: () => void;
-
-  // Settings
-  toggleTrashbin: (enabled?: boolean) => void;
-  toggleWidget: (enabled?: boolean) => void;
-
-  // UI Actions
-  setSettingsOpen: (open: boolean) => void;
-  setCurrentTrack: (track: any) => void;
-
-  // Data Management
-  exportTrash: () => Promise<void>;
-  importTrash: () => void;
-  copyTrash: () => void;
-
-  // Initialization
   initializeFromStorage: () => void;
-  saveToStorage: () => void;
-};
+  setTrashbinEnabled: (enabled: boolean) => void;
+  setWidgetEnabled: (enabled: boolean) => void;
+  setCurrentTrack: (track: any) => void;
+  setUserHitBack: (hitBack: boolean) => void;
 
-const initValue = (key: string, defaultValue: any) => {
+  // Song management
+  addSongToTrash: (uri: string) => void;
+  removeSongFromTrash: (uri: string) => void;
+
+  // Artist management
+  addArtistToTrash: (uri: string) => void;
+  removeArtistFromTrash: (uri: string) => void;
+
+  // Utility functions
+  isSongTrashed: (uri: string) => boolean;
+  isArtistTrashed: (uri: string) => boolean;
+  shouldSkipCurrentTrack: (uri: string, type: string) => boolean;
+
+  // Data management
+  importTrashData: (
+    songs: Record<string, boolean>,
+    artists: Record<string, boolean>,
+  ) => void;
+  clearTrashbin: () => void;
+  exportData: () => {
+    songs: Record<string, boolean>;
+    artists: Record<string, boolean>;
+  };
+}
+
+// Helper function to safely parse JSON from localStorage
+function initValue<T>(item: string, defaultValue: T): T {
   try {
-    const value = JSON.parse(Spicetify.LocalStorage?.get(key) || "null");
-    return value ?? defaultValue;
+    const value = Spicetify.LocalStorage.get(item);
+    if (value === null || value === undefined) {
+      return defaultValue;
+    }
+    return JSON.parse(value) ?? defaultValue;
   } catch {
     return defaultValue;
   }
-};
+}
 
-const shouldSkipCurrentTrack = (uri: string, type: string) => {
-  const curTrack = Spicetify.Player.data?.item;
-  if (!curTrack) return false;
+// Helper function to check if current track should be skipped
+function shouldSkipTrack(
+  uri: string,
+  type: string,
+  currentTrack: any,
+): boolean {
+  if (!currentTrack) return false;
 
-  if (type === "track" && uri === curTrack.uri) {
-    return true;
+  if (type === Spicetify.URI.Type.TRACK) {
+    return uri === currentTrack.uri;
   }
 
-  if (type === "artist") {
-    let count = 1;
-    let artUri = curTrack.metadata?.artist_uri;
+  if (type === Spicetify.URI.Type.ARTIST) {
+    let count = 0;
+    let artUri = currentTrack.metadata?.artist_uri;
     while (artUri) {
-      if (uri === artUri) return true;
-      artUri = (curTrack.metadata as any)?.[`artist_uri:${count}`];
+      if (uri === artUri) {
+        return true;
+      }
       count++;
+      artUri = currentTrack.metadata?.[`artist_uri:${count}`];
     }
   }
 
   return false;
-};
+}
 
-export const useTrashbinStore = create<useTrashbinStore>()(
-  subscribeWithSelector((set, get) => ({
-    // Initial state
-    trashSongList: {},
-    trashArtistList: {},
-    trashbinEnabled: true,
-    widgetEnabled: true,
-    isSettingsOpen: false,
-    currentTrack: null,
+export const useTrashbinStore = create<TrashbinState>((set, get) => ({
+  // Initial state
+  trashbinEnabled: true,
+  widgetEnabled: true,
+  trashSongList: {},
+  trashArtistList: {},
+  currentTrack: null,
+  userHitBack: false,
 
-    // Actions
-    addToTrash: (uri: string, type: string) => {
-      const state = get();
+  // Initialize from localStorage
+  initializeFromStorage: () => {
+    const trashbinEnabled = initValue("trashbin-enabled", true);
+    const widgetEnabled = initValue("TrashbinWidgetIcon", true);
+    const trashSongList = initValue("TrashSongList", {});
+    const trashArtistList = initValue("TrashArtistList", {});
 
-      if (type === "track") {
-        set({ trashSongList: { ...state.trashSongList, [uri]: true } });
-        Spicetify.showNotification("Song added to trashbin");
-      } else if (type === "artist") {
-        set({ trashArtistList: { ...state.trashArtistList, [uri]: true } });
-        Spicetify.showNotification("Artist added to trashbin");
-      }
+    set({
+      trashbinEnabled,
+      widgetEnabled,
+      trashSongList,
+      trashArtistList,
+    });
+  },
 
-      // Skip current track if it matches
-      if (shouldSkipCurrentTrack(uri, type)) {
-        Spicetify.Player.next();
-      }
+  // Core setters
+  setTrashbinEnabled: (enabled: boolean) => {
+    set({ trashbinEnabled: enabled });
+    Spicetify.LocalStorage.set("trashbin-enabled", JSON.stringify(enabled));
+  },
 
-      get().saveToStorage();
-    },
+  setWidgetEnabled: (enabled: boolean) => {
+    set({ widgetEnabled: enabled });
+    Spicetify.LocalStorage.set("TrashbinWidgetIcon", JSON.stringify(enabled));
+  },
 
-    removeFromTrash: (uri: string, type: string) => {
-      const state = get();
+  setCurrentTrack: (track: any) => {
+    set({ currentTrack: track });
+  },
 
-      if (type === "track") {
-        const newList = { ...state.trashSongList };
-        delete newList[uri];
-        set({ trashSongList: newList });
-        Spicetify.showNotification("Song removed from trashbin");
-      } else if (type === "artist") {
-        const newList = { ...state.trashArtistList };
-        delete newList[uri];
-        set({ trashArtistList: newList });
-        Spicetify.showNotification("Artist removed from trashbin");
-      }
+  setUserHitBack: (hitBack: boolean) => {
+    set({ userHitBack: hitBack });
+  },
 
-      get().saveToStorage();
-    },
+  // Song management
+  addSongToTrash: (uri: string) => {
+    const state = get();
+    const newTrashSongList = { ...state.trashSongList, [uri]: true };
 
-    isInTrash: (uri: string, type: string) => {
-      const state = get();
-      return type === "track"
-        ? !!state.trashSongList[uri]
-        : !!state.trashArtistList[uri];
-    },
+    set({ trashSongList: newTrashSongList });
+    Spicetify.LocalStorage.set(
+      "TrashSongList",
+      JSON.stringify(newTrashSongList),
+    );
 
-    clearTrash: () => {
-      set({ trashSongList: {}, trashArtistList: {} });
-      Spicetify.showNotification("Trashbin cleared!");
-      get().saveToStorage();
-    },
+    // Check if current track should be skipped
+    if (
+      state.trashbinEnabled &&
+      shouldSkipTrack(uri, Spicetify.URI.Type.TRACK, state.currentTrack)
+    ) {
+      Spicetify.Player.next();
+    }
 
-    toggleTrashbin: (enabled?: boolean) => {
-      const state = get();
-      const newEnabled = enabled ?? !state.trashbinEnabled;
-      set({ trashbinEnabled: newEnabled });
-      get().saveToStorage();
-    },
+    Spicetify.showNotification("Song added to trashbin");
+  },
 
-    toggleWidget: (enabled?: boolean) => {
-      const state = get();
-      const newEnabled = enabled ?? !state.widgetEnabled;
-      set({ widgetEnabled: newEnabled });
-      get().saveToStorage();
-    },
+  removeSongFromTrash: (uri: string) => {
+    const state = get();
+    const newTrashSongList = { ...state.trashSongList };
+    delete newTrashSongList[uri];
 
-    setSettingsOpen: (open: boolean) => {
-      set({ isSettingsOpen: open });
-    },
+    set({ trashSongList: newTrashSongList });
+    Spicetify.LocalStorage.set(
+      "TrashSongList",
+      JSON.stringify(newTrashSongList),
+    );
 
-    setCurrentTrack: (track: any) => {
-      set({ currentTrack: track });
-    },
+    Spicetify.showNotification("Song removed from trashbin");
+  },
 
-    exportTrash: async () => {
-      const state = get();
-      const data = {
-        songs: state.trashSongList,
-        artists: state.trashArtistList,
-      };
+  // Artist management
+  addArtistToTrash: (uri: string) => {
+    const state = get();
+    const newTrashArtistList = { ...state.trashArtistList, [uri]: true };
 
-      try {
-        const handle = await (window as any).showSaveFilePicker({
-          suggestedName: "spicetify-trashbin-plus.json",
-          types: [
-            {
-              description: "Trashbin+ backup",
-              accept: { "application/json": [".json"] },
-            },
-          ],
-        });
+    set({ trashArtistList: newTrashArtistList });
+    Spicetify.LocalStorage.set(
+      "TrashArtistList",
+      JSON.stringify(newTrashArtistList),
+    );
 
-        const writable = await handle.createWritable();
-        await writable.write(JSON.stringify(data, null, 2));
-        await writable.close();
+    // Check if current track should be skipped
+    if (
+      state.trashbinEnabled &&
+      shouldSkipTrack(uri, Spicetify.URI.Type.ARTIST, state.currentTrack)
+    ) {
+      Spicetify.Player.next();
+    }
 
-        Spicetify.showNotification("Backup saved successfully");
-      } catch {
-        Spicetify.showNotification("Export failed", true);
-      }
-    },
+    Spicetify.showNotification("Artist added to trashbin");
+  },
 
-    importTrash: () => {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = ".json";
-      input.onchange = (e) => {
-        const file = (e.target as HTMLInputElement).files?.[0];
-        if (!file) return;
+  removeArtistFromTrash: (uri: string) => {
+    const state = get();
+    const newTrashArtistList = { ...state.trashArtistList };
+    delete newTrashArtistList[uri];
 
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          try {
-            const data = JSON.parse(e.target?.result as string);
-            set({
-              trashSongList: data.songs || {},
-              trashArtistList: data.artists || {},
-            });
-            get().saveToStorage();
-            Spicetify.showNotification("Import successful!");
-          } catch {
-            Spicetify.showNotification("Import failed!", true);
-          }
-        };
-        reader.readAsText(file);
-      };
-      input.click();
-    },
+    set({ trashArtistList: newTrashArtistList });
+    Spicetify.LocalStorage.set(
+      "TrashArtistList",
+      JSON.stringify(newTrashArtistList),
+    );
 
-    copyTrash: () => {
-      const state = get();
-      const data = {
-        songs: state.trashSongList,
-        artists: state.trashArtistList,
-      };
-      Spicetify.Platform.ClipboardAPI.copy(JSON.stringify(data, null, 2));
-      Spicetify.showNotification("Copied to clipboard");
-    },
+    Spicetify.showNotification("Artist removed from trashbin");
+  },
 
-    initializeFromStorage: () => {
-      set({
-        trashSongList: initValue("TrashSongList", {}),
-        trashArtistList: initValue("TrashArtistList", {}),
-        trashbinEnabled: initValue("trashbin-enabled", true),
-        widgetEnabled: initValue("TrashbinWidgetIcon", true),
-      });
-    },
+  // Utility functions
+  isSongTrashed: (uri: string) => {
+    return !!get().trashSongList[uri];
+  },
 
-    saveToStorage: () => {
-      const state = get();
-      Spicetify.LocalStorage?.set(
-        "TrashSongList",
-        JSON.stringify(state.trashSongList),
-      );
-      Spicetify.LocalStorage?.set(
-        "TrashArtistList",
-        JSON.stringify(state.trashArtistList),
-      );
-      Spicetify.LocalStorage?.set(
-        "trashbin-enabled",
-        JSON.stringify(state.trashbinEnabled),
-      );
-      Spicetify.LocalStorage?.set(
-        "TrashbinWidgetIcon",
-        JSON.stringify(state.widgetEnabled),
-      );
-    },
-  })),
-);
+  isArtistTrashed: (uri: string) => {
+    return !!get().trashArtistList[uri];
+  },
+
+  shouldSkipCurrentTrack: (uri: string, type: string) => {
+    const state = get();
+    return shouldSkipTrack(uri, type, state.currentTrack);
+  },
+
+  // Data management
+  importTrashData: (
+    songs: Record<string, boolean>,
+    artists: Record<string, boolean>,
+  ) => {
+    set({
+      trashSongList: songs,
+      trashArtistList: artists,
+    });
+
+    Spicetify.LocalStorage.set("TrashSongList", JSON.stringify(songs));
+    Spicetify.LocalStorage.set("TrashArtistList", JSON.stringify(artists));
+  },
+
+  clearTrashbin: () => {
+    const emptyList = {};
+
+    set({
+      trashSongList: emptyList,
+      trashArtistList: emptyList,
+    });
+
+    Spicetify.LocalStorage.set("TrashSongList", JSON.stringify(emptyList));
+    Spicetify.LocalStorage.set("TrashArtistList", JSON.stringify(emptyList));
+  },
+
+  exportData: () => {
+    const state = get();
+    return {
+      songs: state.trashSongList,
+      artists: state.trashArtistList,
+    };
+  },
+}));
