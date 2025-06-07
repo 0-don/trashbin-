@@ -1,4 +1,3 @@
-// src/components/trashbin-widget.tsx
 import React, { useEffect, useRef } from "react";
 import { useTrashbinStore } from "../store/trashbin-store";
 
@@ -13,7 +12,6 @@ export const TrashbinWidget: React.FC = () => {
     const THROW_TEXT = "Place in Trashbin";
     const UNTHROW_TEXT = "Remove from Trashbin";
 
-    // Create the native Spicetify widget - exact same as original
     const widget = new Spicetify.Playbar.Widget(
       THROW_TEXT,
       trashbinIcon,
@@ -23,25 +21,14 @@ export const TrashbinWidget: React.FC = () => {
         const type = uriObj.type;
 
         if (!trashbinStore.trashSongList[uri]) {
-          trashbinStore.trashSongList[uri] = true;
-          if (trashbinStore.shouldSkipCurrentTrack(uri, type)) {
-            Spicetify.Player.next();
-          }
-          Spicetify.showNotification("Song added to trashbin");
+          trashbinStore.addSongToTrash(uri);
         } else {
-          delete trashbinStore.trashSongList[uri];
-          Spicetify.showNotification("Song removed from trashbin");
+          trashbinStore.removeSongFromTrash(uri);
         }
-
-        // Save to localStorage
-        Spicetify.LocalStorage.set(
-          "TrashSongList",
-          JSON.stringify(trashbinStore.trashSongList),
-        );
       },
       false, // disabled
       false, // active
-      trashbinStore.widgetEnabled, // registerOnCreate
+      false, // don't register immediately
     );
 
     widgetRef.current = widget;
@@ -53,7 +40,7 @@ export const TrashbinWidget: React.FC = () => {
     };
   }, []);
 
-  // Update widget state when track changes - exactly like original setWidgetState function
+  // Update widget state based on current track and settings
   useEffect(() => {
     if (!widgetRef.current) return;
 
@@ -65,12 +52,12 @@ export const TrashbinWidget: React.FC = () => {
     const type = uriObj.type;
     const isBanned = trashbinStore.trashSongList[uri];
 
-    // Hide widget for non-track types (exactly like original)
+    // Hide widget for non-track types
     const hidden = type !== Spicetify.URI.Type.TRACK;
 
     if (hidden) {
       widgetRef.current.deregister();
-    } else if (trashbinStore.widgetEnabled) {
+    } else if (trashbinStore.widgetEnabled && trashbinStore.trashbinEnabled) {
       widgetRef.current.register();
     }
 
@@ -83,6 +70,7 @@ export const TrashbinWidget: React.FC = () => {
     trashbinStore.currentTrack,
     trashbinStore.trashSongList,
     trashbinStore.widgetEnabled,
+    trashbinStore.trashbinEnabled,
   ]);
 
   // Handle widget registration based on settings
@@ -90,12 +78,18 @@ export const TrashbinWidget: React.FC = () => {
     if (!widgetRef.current) return;
 
     if (trashbinStore.widgetEnabled && trashbinStore.trashbinEnabled) {
-      widgetRef.current.register();
+      // Only register if current track is a track type
+      const currentTrack = trashbinStore.currentTrack;
+      if (currentTrack) {
+        const uriObj = Spicetify.URI.fromString(currentTrack.uri);
+        if (uriObj.type === Spicetify.URI.Type.TRACK) {
+          widgetRef.current.register();
+        }
+      }
     } else {
       widgetRef.current.deregister();
     }
   }, [trashbinStore.widgetEnabled, trashbinStore.trashbinEnabled]);
-
 
   return null;
 };
