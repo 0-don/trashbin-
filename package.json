@@ -6,7 +6,7 @@
   "scripts": {
     "build": "spicetify-creator",
     "build-local": "spicetify-creator --out=dist --minify",
-    "dev": "rm -rf yarn.lock && rm -rf node_modules && yarn cache clean && yarn --force && concurrently \"spicetify-creator --watch\" \"spicetify watch -e\""
+    "dev": "rm -rf yarn.lock && rm -rf node_modules && yarn && yarn cache clean && yarn --force && concurrently \"spicetify-creator --watch\" \"spicetify watch -e\""
   },
   "devDependencies": {
     "@types/react": "^18.3.23",
