@@ -1,32 +1,60 @@
 import React, { useEffect } from "react";
 import ReactDOM from "react-dom";
+import { TrashbinContextMenu } from "./components/trashbin-context-menu.";
+import { TrashbinSettings } from "./components/trashbin-settings";
 import { TrashbinWidget } from "./components/trashbin-widget";
 import "./global.css";
 import { useTrashbinStore } from "./store/trashbin-store";
-import { TrashbinContextMenu } from "./components/trashbin-context-menu.";
-import { TrashbinSettings } from "./components/trashbin-settings";
 
 function App() {
-  const { initializeFromStorage, setCurrentTrack, trashbinEnabled } =
-    useTrashbinStore();
+  const trashbinStore = useTrashbinStore();
 
   useEffect(() => {
-    // Initialize store from localStorage
-    initializeFromStorage();
+    trashbinStore.initializeFromStorage();
+  }, []);
 
-    // Set up player event listeners
-    const updateCurrentTrack = () => {
+  useEffect(() => {
+    const handleSongChange = () => {
       const track = Spicetify.Player.data?.item;
-      setCurrentTrack(track);
+
+      // Always update current track
+      trashbinStore.setCurrentTrack(track);
+
+      // Only auto-skip if trashbin is enabled
+      if (!track || !trashbinStore.trashbinEnabled) return;
+
+      // Check if song is trashed
+      if (trashbinStore.trashSongList[track.uri]) {
+        Spicetify.Player.next();
+        return;
+      }
+
+      // Check if any artist is trashed
+      let artistUri = track.metadata?.artist_uri;
+      let index = 0;
+      while (artistUri) {
+        if (trashbinStore.trashArtistList[artistUri]) {
+          Spicetify.Player.next();
+          return;
+        }
+        index++;
+        artistUri = (track.metadata as any)?.[`artist_uri:${index}`];
+      }
     };
 
-    updateCurrentTrack();
-    Spicetify.Player.addEventListener("songchange", updateCurrentTrack);
+    // Set initial track
+    handleSongChange();
+
+    Spicetify.Player.addEventListener("songchange", handleSongChange);
 
     return () => {
-      Spicetify.Player.removeEventListener("songchange", updateCurrentTrack);
+      Spicetify.Player.removeEventListener("songchange", handleSongChange);
     };
-  }, [initializeFromStorage, setCurrentTrack]);
+  }, [
+    trashbinStore.trashbinEnabled,
+    trashbinStore.trashSongList,
+    trashbinStore.trashArtistList,
+  ]);
 
   return (
     <>

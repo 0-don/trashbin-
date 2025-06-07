@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
 
-interface TrashbinState {
+export type useTrashbinStore = {
   // Data
   trashSongList: Record<string, boolean>;
   trashArtistList: Record<string, boolean>;
@@ -36,7 +36,7 @@ interface TrashbinState {
   // Initialization
   initializeFromStorage: () => void;
   saveToStorage: () => void;
-}
+};
 
 const initValue = (key: string, defaultValue: any) => {
   try {
@@ -68,7 +68,7 @@ const shouldSkipCurrentTrack = (uri: string, type: string) => {
   return false;
 };
 
-export const useTrashbinStore = create<TrashbinState>()(
+export const useTrashbinStore = create<useTrashbinStore>()(
   subscribeWithSelector((set, get) => ({
     // Initial state
     trashSongList: {},
@@ -229,20 +229,20 @@ export const useTrashbinStore = create<TrashbinState>()(
       const state = get();
       Spicetify.LocalStorage?.set(
         "TrashSongList",
-        JSON.stringify(state.trashSongList)
+        JSON.stringify(state.trashSongList),
       );
       Spicetify.LocalStorage?.set(
         "TrashArtistList",
-        JSON.stringify(state.trashArtistList)
+        JSON.stringify(state.trashArtistList),
       );
       Spicetify.LocalStorage?.set(
         "trashbin-enabled",
-        JSON.stringify(state.trashbinEnabled)
+        JSON.stringify(state.trashbinEnabled),
       );
       Spicetify.LocalStorage?.set(
         "TrashbinWidgetIcon",
-        JSON.stringify(state.widgetEnabled)
+        JSON.stringify(state.widgetEnabled),
       );
     },
-  }))
+  })),
 );
