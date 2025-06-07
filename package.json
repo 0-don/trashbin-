@@ -13,8 +13,11 @@
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",
     "concurrently": "^9.1.2",
-    "postcss": "^8.5.4",
     "spicetify-creator": "github:0-don/spicetify-creator",
     "tailwindcss": "^4.1.8"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^3.3.0"
   }
 }
