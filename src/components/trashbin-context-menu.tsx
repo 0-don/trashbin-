@@ -1,58 +1,36 @@
-import { useEffect } from "react";
-import { useTrashbinStore } from "../store/trashbin-store";
-import { TRASH_ICON } from "../lib/icons";
+import { useEffect, useRef } from "react";
+import { useTrashOperations } from "../hooks/use-trash-operations";
+import { MESSAGES } from "../lib/constants";
+import { TRASH_ICON } from "./icons";
 
 export function TrashbinContextMenu() {
-  const trashbinStore = useTrashbinStore();
+  const { handleTrashToggle, shouldAddContextMenu, getContextMenuLabel } =
+    useTrashOperations();
+  const contextMenuItemRef = useRef<{ name: string } | null>(null);
 
-  const toggleThrow = (uris: string[]) => {
-    const uri = uris[0];
-    const uriObj = Spicetify.URI.fromString(uri);
-    const type = uriObj.type;
+  const shouldAddContextMenuWithUpdate = (uris: string[]): boolean => {
+    const shouldAdd = shouldAddContextMenu(uris);
 
-    if (type === Spicetify.URI.Type.TRACK) {
-      if (trashbinStore.trashSongList[uri]) {
-        trashbinStore.removeSongFromTrash(uri);
-      } else {
-        trashbinStore.addSongToTrash(uri);
-      }
-    } else if (type === Spicetify.URI.Type.ARTIST) {
-      if (trashbinStore.trashArtistList[uri]) {
-        trashbinStore.removeArtistFromTrash(uri);
-      } else {
-        trashbinStore.addArtistToTrash(uri);
-      }
-    }
-  };
-
-  const shouldAddContextMenu = (uris: string[]): boolean => {
-    if (uris.length > 1 || !trashbinStore.trashbinEnabled) {
-      return false;
+    if (shouldAdd && contextMenuItemRef.current) {
+      contextMenuItemRef.current.name = getContextMenuLabel(uris[0]);
     }
 
-    const uri = uris[0];
-    const uriObj = Spicetify.URI.fromString(uri);
-
-    return (
-      uriObj.type === Spicetify.URI.Type.TRACK ||
-      uriObj.type === Spicetify.URI.Type.ARTIST
-    );
+    return shouldAdd;
   };
 
   useEffect(() => {
     const contextMenuItem = new Spicetify.ContextMenu.Item(
-      "Place in Trashbin",
-      toggleThrow,
-      shouldAddContextMenu,
-      TRASH_ICON,
+      MESSAGES.THROW,
+      handleTrashToggle,
+      shouldAddContextMenuWithUpdate,
+      TRASH_ICON(15),
     );
 
+    contextMenuItemRef.current = contextMenuItem;
     contextMenuItem.register();
 
-    return () => {
-      contextMenuItem.deregister();
-    };
-  }, [trashbinStore.trashbinEnabled]);
+    return () => contextMenuItem.deregister();
+  }, [handleTrashToggle, shouldAddContextMenuWithUpdate]);
 
   return null;
 }

@@ -1,44 +1,62 @@
-import { useEffect } from "react";
-import { TRASH_ICON } from "../lib/icons";
+import React, { useEffect, useState } from "react";
+import ReactDOM from "react-dom";
+import { MESSAGES, UI_TEXT } from "../lib/constants";
+import { cn } from "../lib/utils";
 import { useTrashbinStore } from "../store/trashbin-store";
+import { TRASH_ICON } from "./icons";
 
-export function TrashbinSettings() {
-  const trashbinStore = useTrashbinStore();
+const Toggle: React.FC<{
+  label: string;
+  enabled: boolean;
+  onChange: (enabled: boolean) => void;
+}> = ({ label, enabled, onChange }) => (
+  <div className="flex items-center justify-between !gap-2.5 !py-2.5">
+    <label className="w-full pr-4">{label}</label>
+    <div className="text-right">
+      <button
+        className={cn(
+          "!flex !cursor-pointer !items-center !rounded-full !border-0",
+          "!ml-3 !p-2 !transition-colors",
+          "!bg-[rgba(var(--spice-rgb-shadow),0.7)] !text-[var(--spice-text)]",
+          !enabled && "!text-[rgba(var(--spice-rgb-text),0.3)]",
+        )}
+        onClick={() => onChange(!enabled)}
+      >
+        <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M8.797 2.5a.5.5 0 0 0-.594 0L2.5 6.5v7a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-7l-5.703-4z" />
+        </svg>
+      </button>
+    </div>
+  </div>
+);
 
-  const copyItems = () => {
-    const data = trashbinStore.exportData();
-    Spicetify.Platform.ClipboardAPI.copy(JSON.stringify(data));
-    Spicetify.showNotification("Copied to clipboard");
-  };
+const ActionButton: React.FC<{
+  label: string;
+  description: string;
+  onClick: () => void;
+}> = ({ label, description, onClick }) => (
+  <div className="flex items-center justify-between !gap-2.5 !py-2.5">
+    <label className="w-full pr-4">{description}</label>
+    <div className="text-right">
+      <button
+        className={cn(
+          "!rounded-full !bg-transparent !font-bold !transition-transform",
+          "!border !border-[#727272] !px-[15px] !duration-[33ms]",
+          "!min-h-8 !cursor-pointer !text-[var(--spice-text)]",
+          "hover:!scale-[1.04] hover:!border-[var(--spice-text)]",
+        )}
+        onClick={onClick}
+      >
+        {label}
+      </button>
+    </div>
+  </div>
+);
 
-  const exportItems = async () => {
-    const data = trashbinStore.exportData();
-    try {
-      const handle = await (window as any).showSaveFilePicker({
-        suggestedName: "spicetify-trashbin.json",
-        types: [
-          {
-            description: "Spicetify trashbin backup",
-            accept: {
-              "application/json": [".json"],
-            },
-          },
-        ],
-      });
+const SettingsModal: React.FC = () => {
+  const store = useTrashbinStore();
 
-      const writable = await handle.createWritable();
-      await writable.write(JSON.stringify(data));
-      await writable.close();
-
-      Spicetify.showNotification("Backup saved successfully.");
-    } catch {
-      Spicetify.showNotification(
-        "Failed to save, try copying trashbin contents to clipboard and creating a backup manually.",
-      );
-    }
-  };
-
-  const importItems = () => {
+  const handleFileImport = () => {
     const input = document.createElement("input");
     input.type = "file";
     input.accept = ".json";
@@ -50,168 +68,124 @@ export function TrashbinSettings() {
       reader.onload = (e) => {
         try {
           const data = JSON.parse(e.target?.result as string);
-          trashbinStore.importTrashData(data.songs || {}, data.artists || {});
-          Spicetify.showNotification("File Import Successful!");
-        } catch (e) {
-          Spicetify.showNotification("File Import Failed!", true);
-          console.error(e);
+          store.importTrashData(data.songs || {}, data.artists || {});
+          Spicetify.showNotification(MESSAGES.BACKUP_RESTORED_SUCCESS);
+        } catch {
+          Spicetify.showNotification(MESSAGES.BACKUP_RESTORED_FAILED, true);
         }
-      };
-      reader.onerror = () => {
-        Spicetify.showNotification("File Read Failed!", true);
-        console.error(reader.error);
       };
       reader.readAsText(file);
     };
     input.click();
   };
 
-  const clearTrashbin = () => {
-    trashbinStore.clearTrashbin();
-    Spicetify.showNotification("Trashbin cleared!");
+  const handleExport = async () => {
+    try {
+      const handle = await (window as any).showSaveFilePicker({
+        suggestedName: UI_TEXT.SUGGESTED_NAME,
+        types: [{ accept: { "application/json": [".json"] } }],
+      });
+      const writable = await handle.createWritable();
+      await writable.write(JSON.stringify(store.exportData()));
+      await writable.close();
+      Spicetify.showNotification(MESSAGES.BACKUP_SAVED_SUCCESS);
+    } catch {
+      Spicetify.showNotification(MESSAGES.BACKUP_SAVED_FAILED);
+    }
   };
 
+  const handleCopy = () => {
+    Spicetify.Platform.ClipboardAPI.copy(JSON.stringify(store.exportData()));
+    Spicetify.showNotification(MESSAGES.COPIED);
+  };
+
+  const handleClear = () => {
+    store.clearTrashbin();
+    Spicetify.showNotification(MESSAGES.TRASHBIN_CLEARED);
+  };
+
+  return (
+    <div className="p-4">
+      <h2 className="!my-2.5 text-lg font-bold text-[var(--spice-text)] first-of-type:mt-0">
+        {UI_TEXT.OPTIONS}
+      </h2>
+      <Toggle
+        label={UI_TEXT.ENABLED}
+        enabled={store.trashbinEnabled}
+        onChange={store.setTrashbinEnabled}
+      />
+      <Toggle
+        label={UI_TEXT.SHOW_WIDGET_ICON}
+        enabled={store.widgetEnabled}
+        onChange={store.setWidgetEnabled}
+      />
+
+      <h2 className="!my-2.5 text-lg font-bold text-[var(--spice-text)] first-of-type:mt-0">
+        {UI_TEXT.LOCAL_STORAGE}
+      </h2>
+      <ActionButton
+        label={UI_TEXT.COPY}
+        description={UI_TEXT.COPY_DESCRIPTION}
+        onClick={handleCopy}
+      />
+      <ActionButton
+        label={UI_TEXT.EXPORT}
+        description={UI_TEXT.EXPORT_DESCRIPTION}
+        onClick={handleExport}
+      />
+      <ActionButton
+        label={UI_TEXT.IMPORT}
+        description={UI_TEXT.IMPORT_DESCRIPTION}
+        onClick={handleFileImport}
+      />
+      <ActionButton
+        label={UI_TEXT.CLEAR}
+        description={UI_TEXT.CLEAR_DESCRIPTION}
+        onClick={handleClear}
+      />
+    </div>
+  );
+};
+
+export function TrashbinSettings() {
+  const [isOpen, setIsOpen] = useState(false);
+
   useEffect(() => {
-    const settingsContent = document.createElement("div");
-    settingsContent.className = "space-y-6 p-4";
-
-    // Create settings UI
-    settingsContent.innerHTML = `
-      <style>
-        .setting-row {
-          display: flex;
-          padding: 10px 0;
-          align-items: center;
-          justify-content: space-between;
-        }
-        .setting-row .col.description {
-          width: 100%;
-          padding-right: 15px;
-        }
-        .setting-row .col.action {
-          text-align: right;
-        }
-        button.switch {
-          align-items: center;
-          border: 0px;
-          border-radius: 50%;
-          background-color: rgba(var(--spice-rgb-shadow), .7);
-          color: var(--spice-text);
-          cursor: pointer;
-          display: flex;
-          margin-inline-start: 12px;
-          padding: 8px;
-        }
-        button.switch.disabled {
-          color: rgba(var(--spice-rgb-text), .3);
-        }
-        button.reset {
-          font-weight: 700;
-          font-size: medium;
-          background-color: transparent;
-          border-radius: 500px;
-          transition-duration: 33ms;
-          padding-inline: 15px;
-          border: 1px solid #727272;
-          color: var(--spice-text);
-          min-block-size: 32px;
-          cursor: pointer;
-        }
-        button.reset:hover {
-          transform: scale(1.04);
-          border-color: var(--spice-text);
-        }
-      </style>
-      <h2>Options</h2>
-      <div class="setting-row">
-        <label class="col description">Enabled</label>
-        <div class="col action">
-          <button class="switch ${!trashbinStore.trashbinEnabled ? "disabled" : ""}" id="enabled-toggle">
-            <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor">
-              ${Spicetify.SVGIcons.check}
-            </svg>
-          </button>
-        </div>
-      </div>
-      <div class="setting-row">
-        <label class="col description">Show Widget Icon</label>
-        <div class="col action">
-          <button class="switch ${!trashbinStore.widgetEnabled ? "disabled" : ""}" id="widget-toggle">
-            <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor">
-              ${Spicetify.SVGIcons.check}
-            </svg>
-          </button>
-        </div>
-      </div>
-      <h2>Local Storage</h2>
-      <div class="setting-row">
-        <label class="col description">Copy all items in trashbin to clipboard.</label>
-        <div class="col action"><button class="reset" id="copy-btn">Copy</button></div>
-      </div>
-      <div class="setting-row">
-        <label class="col description">Save all items in trashbin to a .json file.</label>
-        <div class="col action"><button class="reset" id="export-btn">Export</button></div>
-      </div>
-      <div class="setting-row">
-        <label class="col description">Overwrite all items in trashbin via .json file.</label>
-        <div class="col action"><button class="reset" id="import-btn">Import</button></div>
-      </div>
-      <div class="setting-row">
-        <label class="col description">Clear all items from trashbin (cannot be reverted).</label>
-        <div class="col action"><button class="reset" id="clear-btn">Clear</button></div>
-      </div>
-    `;
-
-    // Add event listeners
-    settingsContent
-      .querySelector("#enabled-toggle")
-      ?.addEventListener("click", (e) => {
-        const button = e.target as HTMLElement;
-        const newState = button.classList.contains("disabled");
-        button.classList.toggle("disabled");
-        trashbinStore.setTrashbinEnabled(newState);
-      });
-
-    settingsContent
-      .querySelector("#widget-toggle")
-      ?.addEventListener("click", (e) => {
-        const button = e.target as HTMLElement;
-        const newState = button.classList.contains("disabled");
-        button.classList.toggle("disabled");
-        trashbinStore.setWidgetEnabled(newState);
-      });
-
-    settingsContent
-      .querySelector("#copy-btn")
-      ?.addEventListener("click", copyItems);
-    settingsContent
-      .querySelector("#export-btn")
-      ?.addEventListener("click", exportItems);
-    settingsContent
-      .querySelector("#import-btn")
-      ?.addEventListener("click", importItems);
-    settingsContent
-      .querySelector("#clear-btn")
-      ?.addEventListener("click", clearTrashbin);
-
     const menuItem = new Spicetify.Menu.Item(
-      "Trashbin Pl",
+      UI_TEXT.TRASHBIN,
       false,
-      () => {
-        Spicetify.PopupModal.display({
-          title: "Trashbin Settings",
-          content: settingsContent,
-        });
-      },
-      TRASH_ICON,
+      () => setIsOpen(true),
+      TRASH_ICON(15),
     );
-
     menuItem.register();
+    return () => menuItem.deregister();
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const container = document.createElement("div");
+    ReactDOM.render(<SettingsModal />, container);
+
+    Spicetify.PopupModal.display({
+      title: UI_TEXT.SETTINGS,
+      content: container,
+    });
+
+    // Detect when modal closes
+    const observer = new MutationObserver(() => {
+      if (!document.querySelector(".main-trackCreditsModal-container")) {
+        setIsOpen(false);
+        ReactDOM.unmountComponentAtNode(container);
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
 
     return () => {
-      menuItem.deregister();
+      observer.disconnect();
+      ReactDOM.unmountComponentAtNode(container);
     };
-  }, []);
+  }, [isOpen]);
 
   return null;
 }

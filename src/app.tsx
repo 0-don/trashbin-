@@ -2,9 +2,11 @@ import React, { useEffect } from "react";
 import ReactDOM from "react-dom";
 import { TrashbinContextMenu } from "./components/trashbin-context-menu";
 import { TrashbinSettings } from "./components/trashbin-settings";
+import { TrashbinTracklist } from "./components/trashbin-tracklist";
 import { TrashbinWidget } from "./components/trashbin-widget";
 import "./global.css";
 import { useTrashbinStore } from "./store/trashbin-store";
+import { TrashbinQueuelist } from "./components/trashbin-queuelist";
 
 function App() {
   const trashbinStore = useTrashbinStore();
@@ -14,6 +16,8 @@ function App() {
   }, []);
 
   useEffect(() => {
+    if (!trashbinStore.trashbinEnabled) return;
+
     const skipBackBtn =
       document.querySelector(".main-skipBackButton-button") ??
       document.querySelector(
@@ -22,41 +26,26 @@ function App() {
 
     const eventListener = () => trashbinStore.setUserHitBack(true);
 
-    if (skipBackBtn && trashbinStore.trashbinEnabled) {
-      skipBackBtn.addEventListener("click", eventListener);
-      return () => {
-        skipBackBtn.removeEventListener("click", eventListener);
-      };
-    }
-  }, [trashbinStore.trashbinEnabled]);
-
-  useEffect(() => {
     const handleSongChange = () => {
       const track = Spicetify.Player.data?.item;
+      const state = useTrashbinStore.getState();
 
-      // Always update current track
-      trashbinStore.setCurrentTrack(track);
-
-      // Check if user hit back button - if so, don't auto-skip
-      if (trashbinStore.userHitBack) {
+      if (state.userHitBack) {
         trashbinStore.setUserHitBack(false);
         return;
       }
 
-      // Only auto-skip if trashbin is enabled
-      if (!track || !trashbinStore.trashbinEnabled) return;
+      if (!track) return;
 
-      // Check if song is trashed
-      if (trashbinStore.trashSongList[track.uri]) {
+      if (state.trashSongList[track.uri]) {
         Spicetify.Player.next();
         return;
       }
 
-      // Check if any artist is trashed
       let artistUri = track.metadata?.artist_uri;
       let index = 0;
       while (artistUri) {
-        if (trashbinStore.trashArtistList[artistUri]) {
+        if (state.trashArtistList[artistUri]) {
           Spicetify.Player.next();
           return;
         }
@@ -65,25 +54,24 @@ function App() {
       }
     };
 
-    // Set initial track
+    skipBackBtn?.addEventListener("click", eventListener);
+    Spicetify.Player.addEventListener("songchange", handleSongChange);
     handleSongChange();
 
-    Spicetify.Player.addEventListener("songchange", handleSongChange);
-
     return () => {
+      skipBackBtn?.removeEventListener("click", eventListener);
       Spicetify.Player.removeEventListener("songchange", handleSongChange);
     };
-  }, [
-    trashbinStore.trashbinEnabled,
-    trashbinStore.trashSongList,
-    trashbinStore.trashArtistList,
-  ]);
+  }, [trashbinStore.trashbinEnabled]);
 
   return (
     <>
+      <div className="text-red-500">trashbin+</div>
       <TrashbinWidget />
       <TrashbinSettings />
       <TrashbinContextMenu />
+      <TrashbinTracklist />
+      <TrashbinQueuelist />
     </>
   );
 }
@@ -94,10 +82,14 @@ async function main() {
   appRoot.className = "fixed top-0 left-0 z-50 pointer-events-none";
 
   document.body.appendChild(appRoot);
-
   ReactDOM.render(<App />, appRoot);
-  
-  console.log("Spicetify is ready! Attaching Trashbin+ React component.");
+
+  console.log(
+    "Spicetify is ready! Attaching Trashbin+ React component.",
+    Spicetify,
+  );
+
+  Spicetify.Player.play();
   return () => {
     ReactDOM.unmountComponentAtNode(appRoot);
     appRoot.remove();

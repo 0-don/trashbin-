@@ -1,86 +1,54 @@
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
+import { MESSAGES } from "../lib/constants";
 import { useTrashbinStore } from "../store/trashbin-store";
-import { TRASH_ICON } from "../lib/icons";
+import { TRASH_ICON } from "./icons";
 
-export const TrashbinWidget: React.FC = () => {
-  const trashbinStore = useTrashbinStore();
+export const TrashbinWidget = React.memo(() => {
+  const store = useTrashbinStore();
   const widgetRef = useRef<Spicetify.Playbar.Widget | null>(null);
 
-  const getCurrentTrack = useCallback(
-    () => trashbinStore.currentTrack || Spicetify.Player.data?.item,
-    [trashbinStore.currentTrack],
-  );
+  const updateWidgetState = (widget: Spicetify.Playbar.Widget) => {
+    const currentTrack = Spicetify.Player.data?.item;
+    if (!currentTrack) return;
 
-  const updateWidget = useCallback(() => {
-    const widget = widgetRef.current;
-    const track = getCurrentTrack();
-
-    if (!widget || !track) return;
-
-    const uri = track.uri;
     const isTrack =
-      Spicetify.URI.fromString(uri).type === Spicetify.URI.Type.TRACK;
-    const isTrashed = !!trashbinStore.trashSongList[uri];
-    const shouldShow =
-      isTrack && trashbinStore.widgetEnabled && trashbinStore.trashbinEnabled;
+      Spicetify.URI.fromString(currentTrack.uri).type ===
+      Spicetify.URI.Type.TRACK;
+    const isTrashed = !!store.trashSongList[currentTrack.uri];
 
-    if (shouldShow) {
-      widget.register();
+    if (isTrack) {
       widget.active = isTrashed;
-      widget.label = isTrashed ? "Remove from Trashbin" : "Place in Trashbin";
+      widget.label = isTrashed ? MESSAGES.UNTHROW : MESSAGES.THROW;
     } else {
       widget.deregister();
     }
-  }, [
-    getCurrentTrack,
-    trashbinStore.trashSongList,
-    trashbinStore.widgetEnabled,
-    trashbinStore.trashbinEnabled,
-  ]);
+  };
 
-  // Initialize widget
   useEffect(() => {
     const widget = new Spicetify.Playbar.Widget(
-      "Place in Trashbin",
-      TRASH_ICON,
+      MESSAGES.THROW,
+      TRASH_ICON(20),
       () => {
-        const track = Spicetify.Player.data?.item;
-        if (!track) return;
-
-        const uri = track.uri;
-        trashbinStore.trashSongList[uri]
-          ? trashbinStore.removeSongFromTrash(uri)
-          : trashbinStore.addSongToTrash(uri);
+        const currentTrack = Spicetify.Player.data?.item;
+        if (currentTrack) store.toggleSongTrash(currentTrack.uri);
       },
       false,
       false,
-      false,
+      store.widgetEnabled && store.trashbinEnabled,
     );
 
     widgetRef.current = widget;
 
-    // Initial setup with fallback
-    const track = getCurrentTrack();
-    if (track && !trashbinStore.currentTrack) {
-      trashbinStore.setCurrentTrack(track);
-    }
+    updateWidgetState(widget);
 
-    updateWidget();
-    const timeoutId = setTimeout(updateWidget, 100);
+    const handleSongChange = () => updateWidgetState(widget);
+    Spicetify.Player.addEventListener("songchange", handleSongChange);
 
     return () => {
-      clearTimeout(timeoutId);
+      Spicetify.Player.removeEventListener("songchange", handleSongChange);
       widget.deregister();
     };
-  }, []);
-
-  useEffect(updateWidget, [
-    trashbinStore.currentTrack,
-    trashbinStore.trashSongList,
-    trashbinStore.widgetEnabled,
-    trashbinStore.trashbinEnabled,
-    updateWidget,
-  ]);
+  }, [store.trashbinEnabled, store.widgetEnabled, store.trashSongList]);
 
   return null;
-};
+});
