@@ -9,6 +9,7 @@ export function TrashbinSettings() {
       songs: trashbinStore.trashSongList,
       artists: trashbinStore.trashArtistList,
     };
+    console.log("Copying data to clipboard:", data);
     Spicetify.Platform.ClipboardAPI.copy(JSON.stringify(data));
     Spicetify.showNotification("Copied to clipboard");
   };

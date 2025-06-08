@@ -97,6 +97,14 @@ export const useTrashbinStore = create<TrashbinState>((set, get) => ({
     const trashSongList = initValue("TrashSongList", {});
     const trashArtistList = initValue("TrashArtistList", {});
 
+    console.log(
+      "test",
+      trashbinEnabled,
+      widgetEnabled,
+      trashSongList,
+      trashArtistList,
+    );
+
     set({
       trashbinEnabled,
       widgetEnabled,
