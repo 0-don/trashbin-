@@ -1,25 +1,18 @@
-import React from "react";
+import { useEffect } from "react";
+import { TRASH_ICON } from "../lib/icons";
 import { useTrashbinStore } from "../store/trashbin-store";
 
 export function TrashbinSettings() {
   const trashbinStore = useTrashbinStore();
 
   const copyItems = () => {
-    const data = {
-      songs: trashbinStore.trashSongList,
-      artists: trashbinStore.trashArtistList,
-    };
-    console.log("Copying data to clipboard:", data);
+    const data = trashbinStore.exportData();
     Spicetify.Platform.ClipboardAPI.copy(JSON.stringify(data));
     Spicetify.showNotification("Copied to clipboard");
   };
 
   const exportItems = async () => {
-    const data = {
-      songs: trashbinStore.trashSongList,
-      artists: trashbinStore.trashArtistList,
-    };
-
+    const data = trashbinStore.exportData();
     try {
       const handle = await (window as any).showSaveFilePicker({
         suggestedName: "spicetify-trashbin.json",
@@ -78,10 +71,7 @@ export function TrashbinSettings() {
     Spicetify.showNotification("Trashbin cleared!");
   };
 
-  React.useEffect(() => {
-    const trashbinIcon =
-      '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="currentcolor"><path d="M5.25 3v-.917C5.25.933 6.183 0 7.333 0h1.334c1.15 0 2.083.933 2.083 2.083V3h4.75v1.5h-.972l-1.257 9.544A2.25 2.25 0 0 1 11.041 16H4.96a2.25 2.25 0 0 1-2.23-1.956L1.472 4.5H.5V3h4.75zm1.5-.917V3h2.5v-.917a.583.583 0 0 0-.583-.583H7.333a.583.583 0 0 0-.583.583zM2.986 4.5l1.23 9.348a.75.75 0 0 0 .744.652h6.08a.75.75 0 0 0 .744-.652L13.015 4.5H2.985z"/></svg>';
-
+  useEffect(() => {
     const settingsContent = document.createElement("div");
     settingsContent.className = "space-y-6 p-4";
 
@@ -213,7 +203,7 @@ export function TrashbinSettings() {
           content: settingsContent,
         });
       },
-      trashbinIcon,
+      TRASH_ICON,
     );
 
     menuItem.register();
