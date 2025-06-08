@@ -1,107 +1,7 @@
-import React, { FC, ReactNode, useEffect, useState } from "react";
-import ReactDOM from "react-dom";
-import {
-  FiCheck,
-  FiCopy,
-  FiDownload,
-  FiTrash2,
-  FiUpload,
-  FiX,
-} from "react-icons/fi";
-import { cn } from "../lib/utils";
+import React from "react";
 import { useTrashbinStore } from "../store/trashbin-store";
 
-interface ToggleButtonProps {
-  enabled: boolean;
-  onClick: () => void;
-}
-
-const ToggleButton: FC<ToggleButtonProps> = ({ enabled, onClick }) => (
-  <button
-    onClick={onClick}
-    className={cn(
-      "flex h-8 w-8 items-center justify-center rounded-full transition-all duration-200",
-    )}
-    style={{
-      border: "none",
-      cursor: "pointer",
-      backgroundColor: enabled ? "#1db954" : "#535353",
-      color: enabled ? "white" : "#b3b3b3",
-    }}
-  >
-    <FiCheck size={16} />
-  </button>
-);
-
-interface ActionButtonProps {
-  onClick: () => void;
-  children: ReactNode;
-  variant?: "default" | "danger";
-}
-
-const ActionButton: FC<ActionButtonProps> = ({
-  onClick,
-  children,
-  variant = "default",
-}) => (
-  <button
-    onClick={onClick}
-    className={cn(
-      "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition-all duration-200 hover:scale-105",
-    )}
-    style={{
-      cursor: "pointer",
-      backgroundColor: "transparent",
-      border: variant === "danger" ? "1px solid #e22134" : "1px solid #727272",
-      color: variant === "danger" ? "#e22134" : "#b3b3b3",
-    }}
-    onMouseEnter={(e) => {
-      const btn = e.target as HTMLElement;
-      if (variant === "danger") {
-        btn.style.backgroundColor = "#e22134";
-        btn.style.color = "white";
-      } else {
-        btn.style.borderColor = "white";
-        btn.style.color = "white";
-      }
-    }}
-    onMouseLeave={(e) => {
-      const btn = e.target as HTMLElement;
-      btn.style.backgroundColor = "transparent";
-      btn.style.borderColor = variant === "danger" ? "#e22134" : "#727272";
-      btn.style.color = variant === "danger" ? "#e22134" : "#b3b3b3";
-    }}
-  >
-    {children}
-  </button>
-);
-
-interface SettingRowProps {
-  title: string;
-  description: string;
-  action: ReactNode;
-}
-
-const SettingRow: FC<SettingRowProps> = ({ title, description, action }) => (
-  <div className="flex items-center justify-between py-3">
-    <div className="flex-1 pr-4">
-      <div className="mb-1 text-base font-medium" style={{ color: "white" }}>
-        {title}
-      </div>
-      <div className="text-sm" style={{ color: "#b3b3b3" }}>
-        {description}
-      </div>
-    </div>
-    <div>{action}</div>
-  </div>
-);
-
-interface SettingsModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-const SettingsModal: FC<SettingsModalProps> = ({ isOpen, onClose }) => {
+export function TrashbinSettings() {
   const trashbinStore = useTrashbinStore();
 
   const copyItems = () => {
@@ -177,165 +77,142 @@ const SettingsModal: FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     Spicetify.showNotification("Trashbin cleared!");
   };
 
-  if (!isOpen) return null;
+  React.useEffect(() => {
+    const trashbinIcon =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="currentcolor"><path d="M5.25 3v-.917C5.25.933 6.183 0 7.333 0h1.334c1.15 0 2.083.933 2.083 2.083V3h4.75v1.5h-.972l-1.257 9.544A2.25 2.25 0 0 1 11.041 16H4.96a2.25 2.25 0 0 1-2.23-1.956L1.472 4.5H.5V3h4.75zm1.5-.917V3h2.5v-.917a.583.583 0 0 0-.583-.583H7.333a.583.583 0 0 0-.583.583zM2.986 4.5l1.23 9.348a.75.75 0 0 0 .744.652h6.08a.75.75 0 0 0 .744-.652L13.015 4.5H2.985z"/></svg>';
 
-  // Create portal to render outside of Spicetify's container
-  const modalContent = (
-    <div
-      className="flex items-center justify-center"
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: "rgba(0, 0, 0, 0.8)",
-        zIndex: 999999,
-        fontFamily: "spotify-circular, Helvetica, Arial, sans-serif",
-      }}
-      onClick={onClose} // Close on backdrop click
-    >
-      <div
-        className="mx-4 max-h-[80vh] w-full max-w-lg overflow-y-auto rounded-lg p-6 shadow-2xl"
-        style={{
-          backgroundColor: "#121212",
-          border: "1px solid #333",
-        }}
-        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
-      >
-        {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <FiTrash2 style={{ color: "white" }} size={24} />
-            <h2 className="m-0 text-xl font-bold" style={{ color: "white" }}>
-              Trashbin Settings
-            </h2>
-          </div>
-          <button
-            onClick={onClose}
-            className="rounded p-1 transition-colors"
-            style={{
-              backgroundColor: "transparent",
-              border: "none",
-              cursor: "pointer",
-              color: "#b3b3b3",
-            }}
-            onMouseEnter={(e) =>
-              ((e.target as HTMLElement).style.backgroundColor = "#333")
-            }
-            onMouseLeave={(e) =>
-              ((e.target as HTMLElement).style.backgroundColor = "transparent")
-            }
-          >
-            <FiX size={20} />
+    const settingsContent = document.createElement("div");
+    settingsContent.className = "space-y-6 p-4";
+
+    // Create settings UI
+    settingsContent.innerHTML = `
+      <style>
+        .setting-row {
+          display: flex;
+          padding: 10px 0;
+          align-items: center;
+          justify-content: space-between;
+        }
+        .setting-row .col.description {
+          width: 100%;
+          padding-right: 15px;
+        }
+        .setting-row .col.action {
+          text-align: right;
+        }
+        button.switch {
+          align-items: center;
+          border: 0px;
+          border-radius: 50%;
+          background-color: rgba(var(--spice-rgb-shadow), .7);
+          color: var(--spice-text);
+          cursor: pointer;
+          display: flex;
+          margin-inline-start: 12px;
+          padding: 8px;
+        }
+        button.switch.disabled {
+          color: rgba(var(--spice-rgb-text), .3);
+        }
+        button.reset {
+          font-weight: 700;
+          font-size: medium;
+          background-color: transparent;
+          border-radius: 500px;
+          transition-duration: 33ms;
+          padding-inline: 15px;
+          border: 1px solid #727272;
+          color: var(--spice-text);
+          min-block-size: 32px;
+          cursor: pointer;
+        }
+        button.reset:hover {
+          transform: scale(1.04);
+          border-color: var(--spice-text);
+        }
+      </style>
+      <h2>Options</h2>
+      <div class="setting-row">
+        <label class="col description">Enabled</label>
+        <div class="col action">
+          <button class="switch ${!trashbinStore.trashbinEnabled ? "disabled" : ""}" id="enabled-toggle">
+            <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor">
+              ${Spicetify.SVGIcons.check}
+            </svg>
           </button>
         </div>
-
-        {/* Options Section */}
-        <div className="mb-8">
-          <h3
-            className="m-0 mb-4 text-lg font-semibold"
-            style={{ color: "white" }}
-          >
-            Options
-          </h3>
-          <div className="space-y-1">
-            <SettingRow
-              title="Enabled"
-              description="Enable/disable trashbin functionality"
-              action={
-                <ToggleButton
-                  enabled={trashbinStore.trashbinEnabled}
-                  onClick={() =>
-                    trashbinStore.setTrashbinEnabled(
-                      !trashbinStore.trashbinEnabled,
-                    )
-                  }
-                />
-              }
-            />
-            <SettingRow
-              title="Show Widget Icon"
-              description="Display trashbin widget in playbar"
-              action={
-                <ToggleButton
-                  enabled={trashbinStore.widgetEnabled}
-                  onClick={() =>
-                    trashbinStore.setWidgetEnabled(!trashbinStore.widgetEnabled)
-                  }
-                />
-              }
-            />
-          </div>
-        </div>
-
-        {/* Data Management Section */}
-        <div>
-          <h3
-            className="m-0 mb-4 text-lg font-semibold"
-            style={{ color: "white" }}
-          >
-            Data Management
-          </h3>
-          <div className="flex flex-col gap-3">
-            <SettingRow
-              title="Copy to Clipboard"
-              description="Copy all trashbin items to clipboard"
-              action={
-                <ActionButton onClick={copyItems}>
-                  <FiCopy size={16} />
-                </ActionButton>
-              }
-            />
-            <SettingRow
-              title="Export to File"
-              description="Save trashbin data to JSON file"
-              action={
-                <ActionButton onClick={exportItems}>
-                  <FiDownload size={16} />
-                </ActionButton>
-              }
-            />
-            <SettingRow
-              title="Import from File"
-              description="Load trashbin data from JSON file"
-              action={
-                <ActionButton onClick={importItems}>
-                  <FiUpload size={16} />
-                </ActionButton>
-              }
-            />
-            <SettingRow
-              title="Clear Trashbin"
-              description="Remove all items (cannot be undone)"
-              action={
-                <ActionButton onClick={clearTrashbin} variant="danger">
-                  <FiTrash2 size={16} />
-                </ActionButton>
-              }
-            />
-          </div>
+      </div>
+      <div class="setting-row">
+        <label class="col description">Show Widget Icon</label>
+        <div class="col action">
+          <button class="switch ${!trashbinStore.widgetEnabled ? "disabled" : ""}" id="widget-toggle">
+            <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor">
+              ${Spicetify.SVGIcons.check}
+            </svg>
+          </button>
         </div>
       </div>
-    </div>
-  );
+      <h2>Local Storage</h2>
+      <div class="setting-row">
+        <label class="col description">Copy all items in trashbin to clipboard.</label>
+        <div class="col action"><button class="reset" id="copy-btn">Copy</button></div>
+      </div>
+      <div class="setting-row">
+        <label class="col description">Save all items in trashbin to a .json file.</label>
+        <div class="col action"><button class="reset" id="export-btn">Export</button></div>
+      </div>
+      <div class="setting-row">
+        <label class="col description">Overwrite all items in trashbin via .json file.</label>
+        <div class="col action"><button class="reset" id="import-btn">Import</button></div>
+      </div>
+      <div class="setting-row">
+        <label class="col description">Clear all items from trashbin (cannot be reverted).</label>
+        <div class="col action"><button class="reset" id="clear-btn">Clear</button></div>
+      </div>
+    `;
 
-  // Render to document.body using portal
-  return ReactDOM.createPortal(modalContent, document.body);
-};
+    // Add event listeners
+    settingsContent
+      .querySelector("#enabled-toggle")
+      ?.addEventListener("click", (e) => {
+        const button = e.target as HTMLElement;
+        const newState = button.classList.contains("disabled");
+        button.classList.toggle("disabled");
+        trashbinStore.setTrashbinEnabled(newState);
+      });
 
-export function TrashbinSettings() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+    settingsContent
+      .querySelector("#widget-toggle")
+      ?.addEventListener("click", (e) => {
+        const button = e.target as HTMLElement;
+        const newState = button.classList.contains("disabled");
+        button.classList.toggle("disabled");
+        trashbinStore.setWidgetEnabled(newState);
+      });
 
-  useEffect(() => {
+    settingsContent
+      .querySelector("#copy-btn")
+      ?.addEventListener("click", copyItems);
+    settingsContent
+      .querySelector("#export-btn")
+      ?.addEventListener("click", exportItems);
+    settingsContent
+      .querySelector("#import-btn")
+      ?.addEventListener("click", importItems);
+    settingsContent
+      .querySelector("#clear-btn")
+      ?.addEventListener("click", clearTrashbin);
+
     const menuItem = new Spicetify.Menu.Item(
-      "Trashbin Plus!",
+      "Trashbin Pl",
       false,
       () => {
-        console.log("Menu clicked, opening modal"); // Debug log
-        setIsModalOpen(true);
+        Spicetify.PopupModal.display({
+          title: "Trashbin Settings",
+          content: settingsContent,
+        });
       },
-      '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="currentcolor"><path d="M5.25 3v-.917C5.25.933 6.183 0 7.333 0h1.334c1.15 0 2.083.933 2.083 2.083V3h4.75v1.5h-.972l-1.257 9.544A2.25 2.25 0 0 1 11.041 16H4.96a2.25 2.25 0 0 1-2.23-1.956L1.472 4.5H.5V3h4.75zm1.5-.917V3h2.5v-.917a.583.583 0 0 0-.583-.583H7.333a.583.583 0 0 0-.583.583zM2.986 4.5l1.23 9.348a.75.75 0 0 0 .744.652h6.08a.75.75 0 0 0 .744-.652L13.015 4.5H2.985z"/></svg>',
+      trashbinIcon,
     );
 
     menuItem.register();
@@ -345,9 +222,5 @@ export function TrashbinSettings() {
     };
   }, []);
 
-  console.log("Modal state:", isModalOpen); // Debug log
-
-  return (
-    <SettingsModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
-  );
+  return null;
 }
