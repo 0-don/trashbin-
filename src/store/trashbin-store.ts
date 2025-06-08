@@ -1,4 +1,10 @@
 import { create } from "zustand";
+import {
+  TRASH_ARTIST_LIST_KEY,
+  TRASH_SONG_LIST_KEY,
+  TRASHBIN_ENABLED_KEY,
+  TRASHBIN_WIDGET_ICON_KEY,
+} from "../lib/constants";
 
 interface TrashbinState {
   // Core state
@@ -92,18 +98,10 @@ export const useTrashbinStore = create<TrashbinState>((set, get) => ({
 
   // Initialize from localStorage
   initializeFromStorage: () => {
-    const trashbinEnabled = initValue("trashbin-enabled", true);
-    const widgetEnabled = initValue("TrashbinWidgetIcon", true);
-    const trashSongList = initValue("TrashSongList", {});
-    const trashArtistList = initValue("TrashArtistList", {});
-
-    console.log(
-      "test",
-      trashbinEnabled,
-      widgetEnabled,
-      trashSongList,
-      trashArtistList,
-    );
+    const trashbinEnabled = initValue(TRASHBIN_ENABLED_KEY, true);
+    const widgetEnabled = initValue(TRASHBIN_WIDGET_ICON_KEY, true);
+    const trashSongList = initValue(TRASH_SONG_LIST_KEY, {});
+    const trashArtistList = initValue(TRASH_ARTIST_LIST_KEY, {});
 
     set({
       trashbinEnabled,
@@ -116,12 +114,15 @@ export const useTrashbinStore = create<TrashbinState>((set, get) => ({
   // Core setters
   setTrashbinEnabled: (enabled: boolean) => {
     set({ trashbinEnabled: enabled });
-    Spicetify.LocalStorage.set("trashbin-enabled", JSON.stringify(enabled));
+    Spicetify.LocalStorage.set(TRASHBIN_ENABLED_KEY, JSON.stringify(enabled));
   },
 
   setWidgetEnabled: (enabled: boolean) => {
     set({ widgetEnabled: enabled });
-    Spicetify.LocalStorage.set("TrashbinWidgetIcon", JSON.stringify(enabled));
+    Spicetify.LocalStorage.set(
+      TRASHBIN_WIDGET_ICON_KEY,
+      JSON.stringify(enabled),
+    );
   },
 
   setCurrentTrack: (track: any) => {
@@ -139,7 +140,7 @@ export const useTrashbinStore = create<TrashbinState>((set, get) => ({
 
     set({ trashSongList: newTrashSongList });
     Spicetify.LocalStorage.set(
-      "TrashSongList",
+      TRASH_SONG_LIST_KEY,
       JSON.stringify(newTrashSongList),
     );
 
@@ -161,7 +162,7 @@ export const useTrashbinStore = create<TrashbinState>((set, get) => ({
 
     set({ trashSongList: newTrashSongList });
     Spicetify.LocalStorage.set(
-      "TrashSongList",
+      TRASH_SONG_LIST_KEY,
       JSON.stringify(newTrashSongList),
     );
 
@@ -175,7 +176,7 @@ export const useTrashbinStore = create<TrashbinState>((set, get) => ({
 
     set({ trashArtistList: newTrashArtistList });
     Spicetify.LocalStorage.set(
-      "TrashArtistList",
+      TRASH_ARTIST_LIST_KEY,
       JSON.stringify(newTrashArtistList),
     );
 
@@ -197,7 +198,7 @@ export const useTrashbinStore = create<TrashbinState>((set, get) => ({
 
     set({ trashArtistList: newTrashArtistList });
     Spicetify.LocalStorage.set(
-      "TrashArtistList",
+      TRASH_ARTIST_LIST_KEY,
       JSON.stringify(newTrashArtistList),
     );
 
@@ -228,8 +229,8 @@ export const useTrashbinStore = create<TrashbinState>((set, get) => ({
       trashArtistList: artists,
     });
 
-    Spicetify.LocalStorage.set("TrashSongList", JSON.stringify(songs));
-    Spicetify.LocalStorage.set("TrashArtistList", JSON.stringify(artists));
+    Spicetify.LocalStorage.set(TRASH_SONG_LIST_KEY, JSON.stringify(songs));
+    Spicetify.LocalStorage.set(TRASH_ARTIST_LIST_KEY, JSON.stringify(artists));
   },
 
   clearTrashbin: () => {
@@ -240,8 +241,11 @@ export const useTrashbinStore = create<TrashbinState>((set, get) => ({
       trashArtistList: emptyList,
     });
 
-    Spicetify.LocalStorage.set("TrashSongList", JSON.stringify(emptyList));
-    Spicetify.LocalStorage.set("TrashArtistList", JSON.stringify(emptyList));
+    Spicetify.LocalStorage.set(TRASH_SONG_LIST_KEY, JSON.stringify(emptyList));
+    Spicetify.LocalStorage.set(
+      TRASH_ARTIST_LIST_KEY,
+      JSON.stringify(emptyList),
+    );
   },
 
   exportData: () => {

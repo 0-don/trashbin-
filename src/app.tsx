@@ -89,8 +89,6 @@ function App() {
 }
 
 async function main() {
-  console.log("Spicetify is ready! Attaching Trashbin+ React component.");
-
   const appRoot = document.createElement("div");
   appRoot.id = "trashbin-plus-root";
   appRoot.className = "fixed top-0 left-0 z-50 pointer-events-none";
@@ -98,7 +96,8 @@ async function main() {
   document.body.appendChild(appRoot);
 
   ReactDOM.render(<App />, appRoot);
-
+  
+  console.log("Spicetify is ready! Attaching Trashbin+ React component.");
   return () => {
     ReactDOM.unmountComponentAtNode(appRoot);
     appRoot.remove();
