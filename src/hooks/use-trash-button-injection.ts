@@ -43,6 +43,8 @@ export const useTrashButtonInjection = (config: TrashButtonConfig) => {
       .querySelectorAll(config.buttonSelector)
       .forEach((btn) => btn.remove());
 
+    console.log(new Date(), config.buttonSelector);
+
     const container = document.querySelector(config.containerSelector);
     if (!container) return;
 
