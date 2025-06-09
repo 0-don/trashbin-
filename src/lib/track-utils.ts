@@ -17,7 +17,7 @@ interface ElementWithFiber extends Element {
   [key: string]: unknown;
 }
 
-export const extractTrackData = (element: Element): TrackData => {
+export function extractTrackData(element: Element): TrackData {
   let trackURI: string | null = null;
 
   const elementWithFiber = element as ElementWithFiber;
@@ -48,7 +48,7 @@ export const extractTrackData = (element: Element): TrackData => {
     .map((id) => `spotify:artist:${id}`);
 
   return { trackURI, artistURIs };
-};
+}
 
 export function isTrackEffectivelyTrashed(
   track: Spicetify.PlayerTrack | Spicetify.ContextTrack | undefined | null,
