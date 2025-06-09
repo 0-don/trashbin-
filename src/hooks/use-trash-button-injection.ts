@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { TRASH_ICON } from "../components/icons";
 import { extractTrackData } from "../lib/track-utils";
 import { useTrashbinStore } from "../store/trashbin-store";
@@ -10,14 +10,37 @@ interface TrashButtonConfig {
   rowSelector: string;
   moreButtonSelector: string;
   buttonClassName: string;
-  buttonContainer?: (moreButton: Element) => Element | null;
 }
 
-export const useTrashButtonInjection = (config: TrashButtonConfig) => {
+export const useTrashButtonInjection = (
+  config: TrashButtonConfig,
+  enabled: boolean = true,
+) => {
   const store = useTrashbinStore();
 
-  const createTrashButton = useCallback(
-    (trackURI: string): HTMLButtonElement => {
+  const removeTrashButtons = useCallback(() => {
+    document
+      .querySelectorAll(config.buttonSelector)
+      .forEach((btn) => btn.remove());
+  }, [config.buttonSelector]);
+
+  const injectTrashButtons = useCallback(() => {
+    // Remove existing buttons first
+    removeTrashButtons();
+
+    // Don't inject if not enabled
+    if (!enabled || !store.trashbinEnabled) return;
+
+    const container = document.querySelector(config.containerSelector);
+    if (!container) return;
+
+    container.querySelectorAll(config.moreButtonSelector).forEach((moreBtn) => {
+      const row = moreBtn.closest(config.rowSelector);
+      if (!row) return;
+
+      const { trackURI } = extractTrackData(row);
+      if (!trackURI || row.querySelector(config.buttonSelector)) return;
+
       const isTrashed = !!store.trashSongList[trackURI];
       const btn = document.createElement("button");
       btn.className = `${config.buttonClassName} bg-transparent border-none p-2 opacity-70 cursor-pointer hover:opacity-100 transition-opacity`;
@@ -32,67 +55,33 @@ export const useTrashButtonInjection = (config: TrashButtonConfig) => {
         store.toggleSongTrash(trackURI);
       };
 
-      return btn;
-    },
-    [store, config.buttonClassName],
-  );
-
-  const injectTrashButtons = useCallback(() => {
-    // Remove existing buttons
-    document
-      .querySelectorAll(config.buttonSelector)
-      .forEach((btn) => btn.remove());
-
-    console.log(new Date(), config.buttonSelector);
-
-    const container = document.querySelector(config.containerSelector);
-    if (!container) return;
-
-    const moreButtons = container.querySelectorAll(config.moreButtonSelector);
-
-    moreButtons.forEach((moreBtn) => {
-      const row = moreBtn.closest(config.rowSelector);
-      if (!row) return;
-
-      const { trackURI } = extractTrackData(row);
-      if (!trackURI) return;
-
-      // Skip if button already exists
-      if (row.querySelector(config.buttonSelector)) return;
-
-      const btn = createTrashButton(trackURI);
-
-      // Get container for button (either custom logic or default)
-      const buttonContainer = config.buttonContainer
-        ? config.buttonContainer(moreBtn)
-        : moreBtn.parentElement;
-
-      buttonContainer?.insertBefore(btn, moreBtn);
+      moreBtn.parentElement?.insertBefore(btn, moreBtn);
     });
-  }, [config, createTrashButton]);
+  }, [config, store, enabled, removeTrashButtons]);
 
-  const shouldTrigger = useCallback(
-    (mutations: MutationRecord[]): boolean => {
-      return mutations.some((mutation) =>
-        Array.from(mutation.addedNodes).some((node) => {
-          if (node.nodeType !== Node.ELEMENT_NODE) return false;
-          const element = node as Element;
+  // Remove buttons when disabled
+  useEffect(() => {
+    if (!enabled || !store.trashbinEnabled) {
+      removeTrashButtons();
+    } else {
+      injectTrashButtons();
+    }
+  }, [enabled, store.trashbinEnabled, removeTrashButtons, injectTrashButtons]);
 
-          const isRelevant =
-            element.closest?.(config.containerSelector) ||
-            element.querySelector?.(config.containerSelector);
-
-          return (
-            isRelevant &&
-            !element.classList?.contains(config.buttonClassName.split(" ")[0])
-          );
-        }),
-      );
-    },
-    [config],
-  );
+  const shouldTrigger = (mutations: MutationRecord[]): boolean =>
+    mutations.some((mutation) =>
+      Array.from(mutation.addedNodes).some((node) => {
+        if (node.nodeType !== Node.ELEMENT_NODE) return false;
+        const element = node as Element;
+        return (
+          (element.closest?.(config.containerSelector) ||
+            element.querySelector?.(config.containerSelector)) &&
+          !element.classList?.contains(config.buttonClassName.split(" ")[0])
+        );
+      }),
+    );
 
   useMutationObserver(injectTrashButtons, shouldTrigger, {
-    enabled: store.trashbinEnabled,
+    enabled: store.trashbinEnabled && enabled,
   });
 };

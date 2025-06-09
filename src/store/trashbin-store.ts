@@ -6,12 +6,20 @@ export const STORAGE_KEYS = {
   WIDGET: "TrashbinWidgetIcon",
   SONGS: "TrashSongList",
   ARTISTS: "TrashArtistList",
+  AUTOPLAY_ON_START: "trashbin-autoplay-on-start",
+  QUEUE_TRASHBIN: "trashbin-queue-enabled",
+  TRACKLIST_TRASHBIN: "trashbin-tracklist-enabled",
+  RESHUFFLE_ON_SKIP: "trashbin-reshuffle-on-skip",
 } as const;
 
 interface TrashbinState {
   // Core state
   trashbinEnabled: boolean;
   widgetEnabled: boolean;
+  autoplayOnStart: boolean;
+  queueTrashbinEnabled: boolean;
+  tracklistTrashbinEnabled: boolean;
+  reshuffleOnSkip: boolean;
   trashSongList: Record<string, boolean>;
   trashArtistList: Record<string, boolean>;
   userHitBack: boolean;
@@ -20,6 +28,10 @@ interface TrashbinState {
   initializeFromStorage: () => void;
   setTrashbinEnabled: (enabled: boolean) => void;
   setWidgetEnabled: (enabled: boolean) => void;
+  setAutoplayOnStart: (enabled: boolean) => void;
+  setQueueTrashbinEnabled: (enabled: boolean) => void;
+  setTracklistTrashbinEnabled: (enabled: boolean) => void;
+  setReshuffleOnSkip: (enabled: boolean) => void;
   setUserHitBack: (hitBack: boolean) => void;
 
   // Unified actions
@@ -62,7 +74,7 @@ function shouldSkipTrack(uri: string, type: string): boolean {
     while (artUri) {
       if (uri === artUri) return true;
       count++;
-      artUri = (currentTrack.metadata as any)?.[`artist_uri:${count}`];
+      artUri = currentTrack.metadata?.[`artist_uri:${count}`];
     }
   }
 
@@ -73,6 +85,10 @@ export const useTrashbinStore = create<TrashbinState>((set, get) => ({
   // Initial state
   trashbinEnabled: true,
   widgetEnabled: true,
+  autoplayOnStart: false,
+  queueTrashbinEnabled: true,
+  tracklistTrashbinEnabled: true,
+  reshuffleOnSkip: false,
   trashSongList: {},
   trashArtistList: {},
   userHitBack: false,
@@ -84,6 +100,13 @@ export const useTrashbinStore = create<TrashbinState>((set, get) => ({
       widgetEnabled: initValue(STORAGE_KEYS.WIDGET, true),
       trashSongList: initValue(STORAGE_KEYS.SONGS, {}),
       trashArtistList: initValue(STORAGE_KEYS.ARTISTS, {}),
+      autoplayOnStart: initValue(STORAGE_KEYS.AUTOPLAY_ON_START, false),
+      queueTrashbinEnabled: initValue(STORAGE_KEYS.QUEUE_TRASHBIN, true),
+      tracklistTrashbinEnabled: initValue(
+        STORAGE_KEYS.TRACKLIST_TRASHBIN,
+        true,
+      ),
+      reshuffleOnSkip: initValue(STORAGE_KEYS.RESHUFFLE_ON_SKIP, false),
     });
   },
 
@@ -95,6 +118,38 @@ export const useTrashbinStore = create<TrashbinState>((set, get) => ({
   setWidgetEnabled: (enabled: boolean) => {
     set({ widgetEnabled: enabled });
     Spicetify.LocalStorage.set(STORAGE_KEYS.WIDGET, JSON.stringify(enabled));
+  },
+
+  setAutoplayOnStart: (enabled: boolean) => {
+    set({ autoplayOnStart: enabled });
+    Spicetify.LocalStorage.set(
+      STORAGE_KEYS.AUTOPLAY_ON_START,
+      JSON.stringify(enabled),
+    );
+  },
+
+  setQueueTrashbinEnabled: (enabled: boolean) => {
+    set({ queueTrashbinEnabled: enabled });
+    Spicetify.LocalStorage.set(
+      STORAGE_KEYS.QUEUE_TRASHBIN,
+      JSON.stringify(enabled),
+    );
+  },
+
+  setTracklistTrashbinEnabled: (enabled: boolean) => {
+    set({ tracklistTrashbinEnabled: enabled });
+    Spicetify.LocalStorage.set(
+      STORAGE_KEYS.TRACKLIST_TRASHBIN,
+      JSON.stringify(enabled),
+    );
+  },
+
+  setReshuffleOnSkip: (enabled: boolean) => {
+    set({ reshuffleOnSkip: enabled });
+    Spicetify.LocalStorage.set(
+      STORAGE_KEYS.RESHUFFLE_ON_SKIP,
+      JSON.stringify(enabled),
+    );
   },
 
   setUserHitBack: (hitBack: boolean) => set({ userHitBack: hitBack }),

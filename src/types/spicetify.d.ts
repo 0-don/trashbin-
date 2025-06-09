@@ -164,7 +164,9 @@ declare namespace Spicetify {
 		essential: ColorSetNamespaceColors;
 		text: ColorSetNamespaceColors;
 	};
-	type Metadata = Partial<Record<string, string>>;
+	type Metadata = Partial<Record<string, string>> & {
+		[key: `artist_uri:${number}`]: string;
+	};
 	type ContextTrack = {
 		uri: string;
 		uid?: string;
@@ -255,6 +257,7 @@ declare namespace Spicetify {
 		duration: string;
 		album_track_count: string;
 		popularity: string;
+		[key: `artist_uri:${number}`]: string;
 	};
 	type Album = {
 		type: string;

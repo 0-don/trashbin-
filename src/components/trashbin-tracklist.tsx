@@ -1,5 +1,6 @@
 import React from "react";
 import { useTrashButtonInjection } from "../hooks/use-trash-button-injection";
+import { useTrashbinStore } from "../store/trashbin-store";
 
 const TRACKLIST_CONFIG = {
   containerSelector: "main",
@@ -10,6 +11,10 @@ const TRACKLIST_CONFIG = {
 } as const;
 
 export const TrashbinTracklist: React.FC = () => {
-  useTrashButtonInjection(TRACKLIST_CONFIG);
+  const tracklistTrashbinEnabled = useTrashbinStore(
+    (state) => state.tracklistTrashbinEnabled,
+  );
+
+  useTrashButtonInjection(TRACKLIST_CONFIG, tracklistTrashbinEnabled);
   return null;
 };

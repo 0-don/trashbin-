@@ -1,8 +1,9 @@
 import React from "react";
 import { useTrashButtonInjection } from "../hooks/use-trash-button-injection";
+import { useTrashbinStore } from "../store/trashbin-store";
 
 const QUEUELIST_CONFIG = {
-  containerSelector: 'aside[aria-label="Queue"]',
+  containerSelector: "#Desktop_PanelContainer_Id",
   buttonSelector: ".trashbin-queue-btn",
   rowSelector: '[role="row"]',
   moreButtonSelector: 'button[aria-haspopup="menu"]',
@@ -10,6 +11,10 @@ const QUEUELIST_CONFIG = {
 } as const;
 
 export const TrashbinQueuelist: React.FC = () => {
-  useTrashButtonInjection(QUEUELIST_CONFIG);
+  const queueTrashbinEnabled = useTrashbinStore(
+    (state) => state.queueTrashbinEnabled,
+  );
+
+  useTrashButtonInjection(QUEUELIST_CONFIG, queueTrashbinEnabled);
   return null;
 };

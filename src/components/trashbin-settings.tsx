@@ -81,13 +81,13 @@ const SettingsModal: React.FC = () => {
 
   const handleExport = async () => {
     try {
-      const handle = await (window as any).showSaveFilePicker({
+      const handle = await window.showSaveFilePicker?.({
         suggestedName: UI_TEXT.SUGGESTED_NAME,
         types: [{ accept: { "application/json": [".json"] } }],
       });
-      const writable = await handle.createWritable();
-      await writable.write(JSON.stringify(store.exportData()));
-      await writable.close();
+      const writable = await handle?.createWritable();
+      await writable?.write(JSON.stringify(store.exportData()));
+      await writable?.close();
       Spicetify.showNotification(MESSAGES.BACKUP_SAVED_SUCCESS);
     } catch {
       Spicetify.showNotification(MESSAGES.BACKUP_SAVED_FAILED);
@@ -118,6 +118,30 @@ const SettingsModal: React.FC = () => {
         label={UI_TEXT.SHOW_WIDGET_ICON}
         enabled={store.widgetEnabled}
         onChange={store.setWidgetEnabled}
+      />
+
+      <h2 className="!my-2.5 text-lg font-bold text-[var(--spice-text)] first-of-type:mt-0">
+        {UI_TEXT.FEATURES}
+      </h2>
+      <Toggle
+        label={UI_TEXT.AUTOPLAY_ON_START}
+        enabled={store.autoplayOnStart}
+        onChange={store.setAutoplayOnStart}
+      />
+      <Toggle
+        label={UI_TEXT.QUEUE_TRASHBIN}
+        enabled={store.queueTrashbinEnabled}
+        onChange={store.setQueueTrashbinEnabled}
+      />
+      <Toggle
+        label={UI_TEXT.TRACKLIST_TRASHBIN}
+        enabled={store.tracklistTrashbinEnabled}
+        onChange={store.setTracklistTrashbinEnabled}
+      />
+      <Toggle
+        label={UI_TEXT.RESHUFFLE_ON_SKIP}
+        enabled={store.reshuffleOnSkip}
+        onChange={store.setReshuffleOnSkip}
       />
 
       <h2 className="!my-2.5 text-lg font-bold text-[var(--spice-text)] first-of-type:mt-0">

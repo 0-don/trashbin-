@@ -1,0 +1,14 @@
+{
+  "name": "Trashbin+",
+  "description": "A powerful and modern take on the original Trashbin extension. Trash songs and artists you dislike, and they'll be automatically skipped. Features include a settings menu, queue reshuffling on skip, and UI integrations.",
+  "main": "dist/trashbin-plus.js",
+  "preview": "assets/preview.png",
+  "readme": "README.md",
+  "authors": [
+    {
+      "name": "0-don",
+      "url": "https://github.com/0-don"
+    }
+  ],
+  "tags": ["productivity", "skip", "block", "trash"]
+}

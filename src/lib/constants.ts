@@ -25,9 +25,14 @@ export const UI_TEXT = {
   // Settings toggles
   ENABLED: "Enabled",
   SHOW_WIDGET_ICON: "Show Widget Icon",
+  AUTOPLAY_ON_START: "Autoplay on Start",
+  QUEUE_TRASHBIN: "Enable Queue Trashbin",
+  TRACKLIST_TRASHBIN: "Enable Tracklist Trashbin",
+  RESHUFFLE_ON_SKIP: "Skip to Next Non-Trashed & Reshuffle Queue",
 
   // Settings sections
   OPTIONS: "Options",
+  FEATURES: "Features",
   LOCAL_STORAGE: "Local Storage",
 
   // Action buttons
