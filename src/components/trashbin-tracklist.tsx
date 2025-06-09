@@ -3,10 +3,10 @@ import { useTrashButtonInjection } from "../hooks/use-trash-button-injection";
 
 const TRACKLIST_CONFIG = {
   containerSelector: "main",
-  buttonSelector: ".trashbin-btn",
+  buttonSelector: ".trashbin-tracklist-btn",
   rowSelector: ".main-trackList-trackListRow",
   moreButtonSelector: ".main-trackList-rowMoreButton",
-  buttonClassName: "trashbin-btn",
+  buttonClassName: "trashbin-tracklist-btn",
 } as const;
 
 export const TrashbinTracklist: React.FC = () => {
