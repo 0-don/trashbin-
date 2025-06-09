@@ -7,7 +7,7 @@ const QUEUELIST_CONFIG = {
   rowSelector: '[role="row"]',
   moreButtonSelector: 'button[aria-haspopup="menu"]',
   buttonClassName: "trashbin-queue-btn",
-};
+} as const;
 
 export const TrashbinQueuelist: React.FC = () => {
   useTrashButtonInjection(QUEUELIST_CONFIG);

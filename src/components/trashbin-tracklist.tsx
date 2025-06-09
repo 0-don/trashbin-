@@ -7,7 +7,7 @@ const TRACKLIST_CONFIG = {
   rowSelector: ".main-trackList-trackListRow",
   moreButtonSelector: ".main-trackList-rowMoreButton",
   buttonClassName: "trashbin-btn",
-};
+} as const;
 
 export const TrashbinTracklist: React.FC = () => {
   useTrashButtonInjection(TRACKLIST_CONFIG);
