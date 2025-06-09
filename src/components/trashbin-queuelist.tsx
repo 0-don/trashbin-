@@ -9,10 +9,8 @@ const CLASS_NAMES = {
 const SELECTORS = {
   QUEUE_ASIDE: 'aside[aria-label="Queue"]',
   LIST_ROW: '[role="row"]',
-  MORE_BUTTON: 'button[aria-haspopup="menu"][data-encore-id="buttonTertiary"]',
+  MORE_BUTTON: 'button[aria-haspopup="menu"]',
   TRASHBIN_BUTTON: `.${CLASS_NAMES.TRASHBIN_BUTTON}`,
-  ARTIST_LINK: 'a[href*="/artist/"]',
-  TAB_PANEL: '[role="tabpanel"]',
 } as const;
 
 const TRACK_URI_REGEX = /spotify:track:([a-zA-Z0-9]+)/;
@@ -23,19 +21,17 @@ export const TrashbinQueuelist: React.FC = () => {
 
   const extractTrackData = (listRow: Element) => {
     const reactKey = Object.keys(listRow).find((k) => k.includes("react"));
-    let trackURI = null;
     let fiber = reactKey && (listRow as any)[reactKey];
 
-    while (fiber && !trackURI) {
+    while (fiber) {
       const propsString = JSON.stringify(
         fiber.memoizedProps || fiber.props || {},
       );
       const match = propsString.match(TRACK_URI_REGEX);
-      if (match) trackURI = match[0];
+      if (match) return match[0];
       fiber = fiber.return;
     }
-
-    return { trackURI };
+    return null;
   };
 
   const injectTrashButtons = () => {
@@ -46,39 +42,32 @@ export const TrashbinQueuelist: React.FC = () => {
     const queueAside = document.querySelector(SELECTORS.QUEUE_ASIDE);
     if (!queueAside) return;
 
-    const tabPanels = queueAside.querySelectorAll(SELECTORS.TAB_PANEL);
+    const moreButtons = queueAside.querySelectorAll(SELECTORS.MORE_BUTTON);
 
-    tabPanels.forEach((tabPanel) => {
-      const listRows = tabPanel.querySelectorAll(SELECTORS.LIST_ROW);
+    moreButtons.forEach((moreBtn) => {
+      const listRow = moreBtn.closest(SELECTORS.LIST_ROW);
+      if (!listRow) return;
 
-      listRows.forEach((listRow) => {
-        const { trackURI } = extractTrackData(listRow);
+      const trackURI = extractTrackData(listRow);
+      if (!trackURI) return;
 
-        if (!trackURI) return;
+      if (listRow.querySelector(SELECTORS.TRASHBIN_BUTTON)) return;
 
-        const moreBtn = listRow.querySelector(SELECTORS.MORE_BUTTON);
+      const isTrashed = !!store.trashSongList[trackURI];
+      const btn = document.createElement("button");
+      btn.className = `${CLASS_NAMES.TRASHBIN_BUTTON} bg-transparent border-none p-2 opacity-70 cursor-pointer hover:opacity-100 transition-opacity`;
+      btn.innerHTML = TRASH_ICON(16, isTrashed ? "text-green-500" : "");
+      btn.dataset.visuallyTrashed = isTrashed.toString();
 
-        if (!moreBtn) return;
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const newState = btn.dataset.visuallyTrashed !== "true";
+        btn.innerHTML = TRASH_ICON(16, newState ? "text-green-500" : "");
+        btn.dataset.visuallyTrashed = newState.toString();
+        store.toggleSongTrash(trackURI);
+      };
 
-        if (listRow.querySelector(SELECTORS.TRASHBIN_BUTTON)) return;
-
-        const isTrashed = !!store.trashSongList[trackURI];
-        const btn = document.createElement("button");
-        btn.className = `${CLASS_NAMES.TRASHBIN_BUTTON} bg-transparent border-none p-2 opacity-70 cursor-pointer hover:opacity-100 transition-opacity`;
-        btn.innerHTML = TRASH_ICON(16, isTrashed ? "text-green-500" : "");
-        btn.dataset.visuallyTrashed = isTrashed.toString();
-        btn.dataset.trackUri = trackURI;
-
-        btn.onclick = (e) => {
-          e.stopPropagation();
-          const newState = btn.dataset.visuallyTrashed !== "true";
-          btn.innerHTML = TRASH_ICON(16, newState ? "text-green-500" : "");
-          btn.dataset.visuallyTrashed = newState.toString();
-          store.toggleSongTrash(trackURI);
-        };
-
-        moreBtn.parentElement?.insertBefore(btn, moreBtn);
-      });
+      moreBtn.parentElement?.insertBefore(btn, moreBtn);
     });
   };
 
@@ -91,14 +80,9 @@ export const TrashbinQueuelist: React.FC = () => {
           if (node.nodeType !== Node.ELEMENT_NODE) return false;
           const element = node as Element;
 
-          // Check if it's a queue-related change
           const isQueueRelated =
             element.closest?.(SELECTORS.QUEUE_ASIDE) ||
-            element.querySelector?.(SELECTORS.QUEUE_ASIDE) ||
-            (element.matches?.(SELECTORS.LIST_ROW) &&
-              element.closest?.(SELECTORS.QUEUE_ASIDE)) ||
-            (element.matches?.(SELECTORS.TAB_PANEL) &&
-              element.closest?.(SELECTORS.QUEUE_ASIDE));
+            element.querySelector?.(SELECTORS.QUEUE_ASIDE);
 
           return (
             isQueueRelated &&
@@ -107,19 +91,13 @@ export const TrashbinQueuelist: React.FC = () => {
         }),
       );
 
-      if (hasQueueChanges) {
-        // Add a small delay to ensure DOM is fully updated
-        setTimeout(injectTrashButtons, 50);
-      }
+      if (hasQueueChanges) setTimeout(injectTrashButtons, 50);
     });
 
     observerRef.current.observe(document.body, {
       childList: true,
       subtree: true,
     });
-
-    // Initial injection
-    setTimeout(injectTrashButtons, 100);
 
     return () => observerRef.current?.disconnect();
   }, [store.trashbinEnabled, store.trashSongList]);
