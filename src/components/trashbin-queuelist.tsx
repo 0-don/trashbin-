@@ -11,6 +11,7 @@ const SELECTORS = {
   LIST_ROW: '[role="row"]',
   MORE_BUTTON: 'button[aria-haspopup="menu"]',
   TRASHBIN_BUTTON: `.${CLASS_NAMES.TRASHBIN_BUTTON}`,
+  ARTIST_LINK: 'a[href*="/artist/"]',
 } as const;
 
 const TRACK_URI_REGEX = /spotify:track:([a-zA-Z0-9]+)/;
@@ -23,15 +24,24 @@ export const TrashbinQueuelist: React.FC = () => {
     const reactKey = Object.keys(listRow).find((k) => k.includes("react"));
     let fiber = reactKey && (listRow as any)[reactKey];
 
-    while (fiber) {
+    let trackURI = null;
+    while (fiber && !trackURI) {
       const propsString = JSON.stringify(
         fiber.memoizedProps || fiber.props || {},
       );
       const match = propsString.match(TRACK_URI_REGEX);
-      if (match) return match[0];
+      if (match) trackURI = match[0];
       fiber = fiber.return;
     }
-    return null;
+
+    const artistURIs = Array.from(
+      listRow.querySelectorAll(SELECTORS.ARTIST_LINK),
+    ).map(
+      (a) =>
+        `spotify:artist:${(a as HTMLAnchorElement).href.split("/artist/")[1]}`,
+    );
+
+    return { trackURI, artistURIs };
   };
 
   const injectTrashButtons = () => {
@@ -48,7 +58,7 @@ export const TrashbinQueuelist: React.FC = () => {
       const listRow = moreBtn.closest(SELECTORS.LIST_ROW);
       if (!listRow) return;
 
-      const trackURI = extractTrackData(listRow);
+      const { trackURI, artistURIs } = extractTrackData(listRow);
       if (!trackURI) return;
 
       if (listRow.querySelector(SELECTORS.TRASHBIN_BUTTON)) return;
