@@ -27,7 +27,7 @@ export const TrashbinWidget = React.memo(() => {
   useEffect(() => {
     const widget = new Spicetify.Playbar.Widget(
       MESSAGES.THROW,
-      TRASH_ICON(20),
+      TRASH_ICON(18),
       () => {
         const currentTrack = Spicetify.Player.data?.item;
         if (currentTrack) store.toggleSongTrash(currentTrack.uri);
