@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { MESSAGES } from "../lib/constants";
+import { shouldSkipTrack } from "../lib/track-utils";
 
 export const STORAGE_KEYS = {
   ENABLED: "trashbin-enabled",
@@ -58,27 +59,6 @@ function initValue<T>(item: string, defaultValue: T): T {
   } catch {
     return defaultValue;
   }
-}
-
-function shouldSkipTrack(uri: string, type: string): boolean {
-  const currentTrack = Spicetify.Player.data?.item;
-  if (!currentTrack) return false;
-
-  if (type === Spicetify.URI.Type.TRACK) {
-    return uri === currentTrack.uri;
-  }
-
-  if (type === Spicetify.URI.Type.ARTIST) {
-    let count = 0;
-    let artUri = currentTrack.metadata?.artist_uri;
-    while (artUri) {
-      if (uri === artUri) return true;
-      count++;
-      artUri = currentTrack.metadata?.[`artist_uri:${count}`];
-    }
-  }
-
-  return false;
 }
 
 export const useTrashbinStore = create<TrashbinState>((set, get) => ({

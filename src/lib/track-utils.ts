@@ -117,3 +117,24 @@ export async function skipToNextAllowedTrack() {
   // Default behavior: just skip to next
   Spicetify.Player.next();
 }
+
+export function shouldSkipTrack(uri: string, type: string): boolean {
+  const currentTrack = Spicetify.Player.data?.item;
+  if (!currentTrack) return false;
+
+  if (type === Spicetify.URI.Type.TRACK) {
+    return uri === currentTrack.uri;
+  }
+
+  if (type === Spicetify.URI.Type.ARTIST) {
+    let count = 0;
+    let artUri = currentTrack.metadata?.artist_uri;
+    while (artUri) {
+      if (uri === artUri) return true;
+      count++;
+      artUri = currentTrack.metadata?.[`artist_uri:${count}`];
+    }
+  }
+
+  return false;
+}
