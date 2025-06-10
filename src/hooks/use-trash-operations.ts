@@ -15,25 +15,22 @@ export const useTrashOperations = () => {
     }
   };
 
-  const getTrashStatus = (uri: string) => store.getTrashStatus(uri);
-
   const shouldAddContextMenu = (uris: string[]): boolean => {
     if (uris.length > 1 || !store.trashbinEnabled) return false;
 
-    const { type } = getTrashStatus(uris[0]);
+    const { type } = store.getTrashStatus(uris[0]);
     return (
       type === Spicetify.URI.Type.TRACK || type === Spicetify.URI.Type.ARTIST
     );
   };
 
   const getContextMenuLabel = (uri: string): string => {
-    const { isTrashed } = getTrashStatus(uri);
+    const { isTrashed } = store.getTrashStatus(uri);
     return isTrashed ? MESSAGES.UNTHROW : MESSAGES.THROW;
   };
 
   return {
     handleTrashToggle,
-    getTrashStatus,
     shouldAddContextMenu,
     getContextMenuLabel,
   };
