@@ -247,12 +247,10 @@ export const TrashedItemsView: React.FC = () => {
     activeTab,
   ]);
 
-  // Reset cache when switching tabs
   useEffect(() => {
     setLoadingBatches(new Set());
   }, [activeTab]);
 
-  // Reset caches when trash lists change
   useEffect(() => {
     setTrackCache(new Map());
   }, [trashedSongUris]);
