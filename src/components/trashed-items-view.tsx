@@ -112,15 +112,15 @@ const TabButton: React.FC<{
   <button
     onClick={onClick}
     className={cn(
-      "relative px-4 py-2 text-sm font-medium transition-colors",
+      "relative !px-4 !py-2 text-lg font-medium transition-colors",
       "border-b-2 border-transparent",
       isActive
-        ? "border-green-500 text-white"
+        ? "!border-green-500 !text-white"
         : "text-white/60 hover:text-white/80",
     )}
   >
     {label}
-    {count > 0 && <span className="ml-1 text-xs text-white/60">({count})</span>}
+    <span className="!mx-1 text-xs text-white/60">({count})</span>
     {isActive && (
       <div className="absolute right-0 bottom-0 left-0 h-0.5 bg-green-500" />
     )}
@@ -269,13 +269,8 @@ export const TrashedItemsView: React.FC = () => {
     <>
       <style>{`.main-trackCreditsModal-mainSection {overflow-y: hidden !important;}`}</style>
 
-      <div className="mb-4 flex items-center gap-3">
-        <BsTrash3 className="h-6 w-6 text-white/70" />
-        <h2 className="text-2xl font-bold text-white">Trashbin+ Items</h2>
-      </div>
-
       {/* Tab Navigation */}
-      <div className="mb-4 flex border-b border-white/10">
+      <div className="!mb-4 flex border-b border-white/10">
         <TabButton
           label="Songs"
           count={trashedSongUris.length}
@@ -289,10 +284,6 @@ export const TrashedItemsView: React.FC = () => {
           onClick={() => setActiveTab("artists")}
         />
       </div>
-
-      <p className="mb-4 text-white/60">
-        Click the × button to remove {activeTab} from your trashbin.
-      </p>
 
       {currentItems.length === 0 ? (
         <EmptyState type={activeTab} />
@@ -345,7 +336,7 @@ export const TrashedItemsView: React.FC = () => {
             </div>
           </div>
 
-          <div className="py-4 text-center">
+          <div className="!py-4 text-center">
             <p className="text-sm text-white/40">
               {currentCache.size} of {currentItems.length} {activeTab} loaded
             </p>
