@@ -21,9 +21,7 @@
   },
   "dependencies": {
     "@tanstack/react-virtual": "^3.13.10",
-    "clsx": "^2.1.1",
     "react-icons": "^5.5.0",
-    "tailwind-merge": "^3.3.0",
     "zustand": "^5.0.5"
   }
 }
