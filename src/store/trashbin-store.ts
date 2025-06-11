@@ -36,8 +36,8 @@ interface TrashbinState {
   setUserHitBack: (hitBack: boolean) => void;
 
   // Unified actions
-  toggleSongTrash: (uri: string) => void;
-  toggleArtistTrash: (uri: string) => void;
+  toggleSongTrash: (uri: string, showNotification?: boolean) => void;
+  toggleArtistTrash: (uri: string, showNotification?: boolean) => void;
   getTrashStatus: (uri: string) => { isTrashed: boolean; type: string };
 
   // Data management
@@ -134,17 +134,21 @@ export const useTrashbinStore = create<TrashbinState>((set, get) => ({
 
   setUserHitBack: (hitBack: boolean) => set({ userHitBack: hitBack }),
 
-  toggleSongTrash: (uri: string) => {
+  toggleSongTrash: (uri: string, showNotification = true) => {
     const state = get();
     const isTrashed = !!state.trashSongList[uri];
     const newList = { ...state.trashSongList };
 
     if (isTrashed) {
       delete newList[uri];
-      Spicetify.showNotification(MESSAGES.SONG_REMOVED);
+      if (showNotification) {
+        Spicetify.showNotification(MESSAGES.SONG_REMOVED);
+      }
     } else {
       newList[uri] = true;
-      Spicetify.showNotification(MESSAGES.SONG_ADDED);
+      if (showNotification) {
+        Spicetify.showNotification(MESSAGES.SONG_ADDED);
+      }
 
       const currentSpotifyTrack = Spicetify.Player.data?.item;
       if (
@@ -160,17 +164,21 @@ export const useTrashbinStore = create<TrashbinState>((set, get) => ({
     Spicetify.LocalStorage.set(STORAGE_KEYS.SONGS, JSON.stringify(newList));
   },
 
-  toggleArtistTrash: (uri: string) => {
+  toggleArtistTrash: (uri: string, showNotification = true) => {
     const state = get();
     const isTrashed = !!state.trashArtistList[uri];
     const newList = { ...state.trashArtistList };
 
     if (isTrashed) {
       delete newList[uri];
-      Spicetify.showNotification(MESSAGES.ARTIST_REMOVED);
+      if (showNotification) {
+        Spicetify.showNotification(MESSAGES.ARTIST_REMOVED);
+      }
     } else {
       newList[uri] = true;
-      Spicetify.showNotification(MESSAGES.ARTIST_ADDED);
+      if (showNotification) {
+        Spicetify.showNotification(MESSAGES.ARTIST_ADDED);
+      }
 
       const currentSpotifyTrack = Spicetify.Player.data?.item;
       if (

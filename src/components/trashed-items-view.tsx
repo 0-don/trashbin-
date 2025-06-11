@@ -32,8 +32,24 @@ const TrackRow: React.FC<{
       className="ml-2 rounded-full p-2 hover:bg-red-500/20 hover:text-red-400"
       title="Remove from trashbin"
     >
-      <IoClose className="h-5 w-5 text-white/70 group-hover:text-red-400" />
+      <IoClose className="h-5 w-5 text-white/70" />
     </button>
+  </div>
+);
+
+const EmptyState = () => (
+  <div className="p-8 text-center">
+    <div className="flex flex-col items-center gap-6 py-12">
+      <BsTrash3 className="h-20 w-20 text-white/20" />
+      <div>
+        <h3 className="mb-2 text-xl font-semibold text-white">
+          No trashed songs!
+        </h3>
+        <p className="text-white/60">
+          Songs you add to the trashbin will appear here.
+        </p>
+      </div>
+    </div>
   </div>
 );
 
@@ -42,7 +58,7 @@ export const TrashedItemsView: React.FC = () => {
   const [trackCache, setTrackCache] = useState<Map<number, TrackDisplayData>>(
     new Map(),
   );
-  const [loadingRanges, setLoadingRanges] = useState<Set<string>>(new Set());
+  const [loadingBatches, setLoadingBatches] = useState<Set<number>>(new Set());
   const parentRef = useRef<HTMLDivElement>(null);
 
   const trashedUris = useMemo(
@@ -57,15 +73,19 @@ export const TrashedItemsView: React.FC = () => {
     overscan: 10,
   });
 
-  const loadBatch = async (startIndex: number, endIndex: number) => {
-    const batchKey = `${startIndex}-${endIndex}`;
-    if (loadingRanges.has(batchKey)) return;
+  // Simplified batch loading
+  const loadBatch = async (batchIndex: number) => {
+    if (loadingBatches.has(batchIndex)) return;
 
-    setLoadingRanges((prev) => new Set(prev).add(batchKey));
+    const BATCH_SIZE = 50;
+    const startIndex = batchIndex * BATCH_SIZE;
+    const endIndex = Math.min(startIndex + BATCH_SIZE, trashedUris.length);
+
+    setLoadingBatches((prev) => new Set(prev).add(batchIndex));
 
     try {
       const tracks = await fetchTracksMetadata(
-        trashedUris.slice(startIndex, endIndex + 1),
+        trashedUris.slice(startIndex, endIndex),
       );
       setTrackCache((prev) => {
         const newCache = new Map(prev);
@@ -75,74 +95,45 @@ export const TrashedItemsView: React.FC = () => {
     } catch (error) {
       console.error("Failed to load batch:", error);
     } finally {
-      setLoadingRanges((prev) => {
+      setLoadingBatches((prev) => {
         const newSet = new Set(prev);
-        newSet.delete(batchKey);
+        newSet.delete(batchIndex);
         return newSet;
       });
     }
   };
 
+  // Load visible items
   useEffect(() => {
-    const items = virtualizer.getVirtualItems();
-    if (!items.length || !trashedUris.length) return;
+    const BATCH_SIZE = 50;
+    const visibleItems = virtualizer.getVirtualItems();
+    const batchesToLoad = new Set<number>();
 
-    const batchSize = 50;
-    const batches = new Set<string>();
-
-    items.forEach((item) => {
+    visibleItems.forEach((item) => {
       if (!trackCache.has(item.index)) {
-        const start = Math.floor(item.index / batchSize) * batchSize;
-        const end = Math.min(start + batchSize - 1, trashedUris.length - 1);
-        batches.add(`${start}-${end}`);
+        batchesToLoad.add(Math.floor(item.index / BATCH_SIZE));
       }
     });
 
-    batches.forEach((batchKey) => {
-      const [start, end] = batchKey.split("-").map(Number);
-      loadBatch(start, end);
-    });
-  }, [
-    virtualizer.getVirtualItems(),
-    trackCache,
-    trashedUris.length,
-    loadingRanges,
-  ]);
+    batchesToLoad.forEach(loadBatch);
+  }, [virtualizer.getVirtualItems(), trackCache, trashedUris.length]);
 
+  // Reset cache when trash list changes
   useEffect(() => {
     setTrackCache(new Map());
-    setLoadingRanges(new Set());
+    setLoadingBatches(new Set());
   }, [trashedUris]);
 
-  if (!trashedUris.length) {
-    return (
-      <div className="p-8 text-center">
-        <div className="flex flex-col items-center gap-6 py-12">
-          <BsTrash3 className="h-20 w-20 text-white/20" />
-          <div>
-            <h3 className="mb-2 text-xl font-semibold text-white">
-              No trashed songs!
-            </h3>
-            <p className="text-white/60">
-              Songs you add to the trashbin will appear here.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (!trashedUris.length) return <EmptyState />;
 
   return (
     <>
-      <style>
-        {`.main-trackCreditsModal-mainSection {overflow-y: hidden !important;}`}
-      </style>
+      <style>{`.main-trackCreditsModal-mainSection {overflow-y: hidden !important;}`}</style>
 
       <div className="mb-2 flex items-center gap-3">
         <BsTrash3 className="h-6 w-6 text-white/70" />
         <h2 className="text-2xl font-bold text-white">
-          {trashedUris.length} Trashed Song
-          {trashedUris.length !== 1 ? "s" : ""}
+          {trashedUris.length} Trashed Song{trashedUris.length !== 1 ? "s" : ""}
         </h2>
       </div>
       <p className="text-white/60">
@@ -171,7 +162,10 @@ export const TrashedItemsView: React.FC = () => {
                 }}
               >
                 {track ? (
-                  <TrackRow track={track} onUntrash={toggleSongTrash} />
+                  <TrackRow
+                    track={track}
+                    onUntrash={(uri) => toggleSongTrash(uri, false)}
+                  />
                 ) : (
                   <div className="flex h-full items-center justify-center">
                     <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/20 border-t-white/60" />
