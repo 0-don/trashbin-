@@ -1,5 +1,11 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { BsMusicNote, BsPerson, BsTrash3 } from "react-icons/bs";
 import { IoClose } from "react-icons/io5";
 import {
@@ -20,71 +26,52 @@ interface ArtistDisplayData {
   secondaryText: string;
 }
 
-const TrackRow: React.FC<{
-  track: TrackDisplayData;
-  onUntrash: (uri: string) => void;
-}> = ({ track, onUntrash }) => (
-  <div className="flex items-center justify-between rounded-md p-3 hover:bg-white/5">
-    <div className="flex min-w-0 flex-1 items-center gap-3">
-      {track.imageUrl ? (
-        <img
-          src={track.imageUrl}
-          alt={track.name}
-          className="h-12 w-12 rounded object-cover"
-        />
-      ) : (
-        <div className="flex h-12 w-12 items-center justify-center rounded bg-white/10">
-          <BsMusicNote className="h-6 w-6 text-white/70" />
-        </div>
-      )}
-      <div className="min-w-0 flex-1">
-        <div className="truncate font-medium text-white">{track.name}</div>
-        <div className="truncate text-sm text-white/60">{track.artist}</div>
-      </div>
-    </div>
-    <button
-      onClick={() => onUntrash(track.uri)}
-      className="ml-2 rounded-full p-2 hover:bg-red-500/20 hover:text-red-400"
-      title="Remove from trashbin"
-    >
-      <IoClose className="h-5 w-5 text-white/70" />
-    </button>
-  </div>
-);
+type ItemData = TrackDisplayData | ArtistDisplayData;
 
-const ArtistRow: React.FC<{
-  artist: ArtistDisplayData;
+interface ItemRowProps {
+  item: ItemData;
   onUntrash: (uri: string) => void;
-}> = ({ artist, onUntrash }) => (
-  <div className="flex items-center justify-between rounded-md p-3 hover:bg-white/5">
-    <div className="flex min-w-0 flex-1 items-center gap-3">
-      {artist.imageUrl ? (
-        <img
-          src={artist.imageUrl}
-          alt={artist.name}
-          className="h-12 w-12 rounded-full object-cover"
-        />
-      ) : (
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10">
-          <BsPerson className="h-6 w-6 text-white/70" />
-        </div>
-      )}
-      <div className="min-w-0 flex-1">
-        <div className="truncate font-medium text-white">{artist.name}</div>
-        <div className="truncate text-sm text-white/60">
-          {artist.secondaryText}
+}
+
+const ItemRow: React.FC<ItemRowProps> = ({ item, onUntrash }) => {
+  const isArtist = "type" in item && item.type === "artist";
+  const imageClass = isArtist ? "rounded-full" : "rounded";
+  const Icon = isArtist ? BsPerson : BsMusicNote;
+  const secondaryText = isArtist
+    ? (item as ArtistDisplayData).secondaryText
+    : (item as TrackDisplayData).artist;
+
+  return (
+    <div className="flex items-center justify-between rounded-md p-3 hover:bg-white/5">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        {item.imageUrl ? (
+          <img
+            src={item.imageUrl}
+            alt={item.name}
+            className={`h-12 w-12 ${imageClass} object-cover`}
+          />
+        ) : (
+          <div
+            className={`flex h-12 w-12 items-center justify-center ${imageClass} bg-white/10`}
+          >
+            <Icon className="h-6 w-6 text-white/70" />
+          </div>
+        )}
+        <div className="min-w-0 flex-1">
+          <div className="truncate font-medium text-white">{item.name}</div>
+          <div className="truncate text-sm text-white/60">{secondaryText}</div>
         </div>
       </div>
+      <button
+        onClick={() => onUntrash(item.uri)}
+        className="ml-2 rounded-full p-2 hover:bg-red-500/20 hover:text-red-400"
+        title="Remove from trashbin"
+      >
+        <IoClose className="h-5 w-5 text-white/70" />
+      </button>
     </div>
-    <button
-      onClick={() => onUntrash(artist.uri)}
-      className="ml-2 rounded-full p-2 hover:bg-red-500/20 hover:text-red-400"
-      title="Remove from trashbin"
-    >
-      <IoClose className="h-5 w-5 text-white/70" />
-    </button>
-  </div>
-);
+  );
+};
 
 const EmptyState: React.FC<{ type: TabType }> = ({ type }) => (
   <div className="p-8 text-center">
@@ -131,13 +118,15 @@ export const TrashedItemsView: React.FC = () => {
   const { trashSongList, trashArtistList, toggleSongTrash, toggleArtistTrash } =
     useTrashbinStore();
   const [activeTab, setActiveTab] = useState<TabType>("songs");
-  const [trackCache, setTrackCache] = useState<Map<number, TrackDisplayData>>(
-    new Map(),
+  const [itemCache, setItemCache] = useState<
+    Map<string, Map<number, ItemData>>
+  >(
+    new Map([
+      ["songs", new Map()],
+      ["artists", new Map()],
+    ]),
   );
-  const [artistCache, setArtistCache] = useState<
-    Map<number, ArtistDisplayData>
-  >(new Map());
-  const [loadingBatches, setLoadingBatches] = useState<Set<number>>(new Set());
+  const [loadingBatches, setLoadingBatches] = useState<Set<string>>(new Set());
   const parentRef = useRef<HTMLDivElement>(null);
 
   const trashedSongUris = useMemo(
@@ -149,79 +138,71 @@ export const TrashedItemsView: React.FC = () => {
     [trashArtistList],
   );
 
-  const currentItems =
-    activeTab === "songs" ? trashedSongUris : trashedArtistUris;
-  const currentCache = activeTab === "songs" ? trackCache : artistCache;
+  const tabs = [
+    {
+      key: "songs" as const,
+      label: "Songs",
+      count: trashedSongUris.length,
+      uris: trashedSongUris,
+    },
+    {
+      key: "artists" as const,
+      label: "Artists",
+      count: trashedArtistUris.length,
+      uris: trashedArtistUris,
+    },
+  ];
+
+  const currentTab = tabs.find((tab) => tab.key === activeTab)!;
+  const currentCache = itemCache.get(activeTab) || new Map();
 
   const virtualizer = useVirtualizer({
-    count: currentItems.length,
+    count: currentTab.uris.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => 60,
     overscan: 10,
   });
 
-  // Load batch function for songs
-  const loadSongBatch = async (batchIndex: number) => {
-    if (loadingBatches.has(batchIndex) || activeTab !== "songs") return;
+  const loadBatch = useCallback(
+    async (batchIndex: number) => {
+      const batchKey = `${activeTab}-${batchIndex}`;
+      if (loadingBatches.has(batchKey)) return;
 
-    const BATCH_SIZE = 50;
-    const startIndex = batchIndex * BATCH_SIZE;
-    const endIndex = Math.min(startIndex + BATCH_SIZE, trashedSongUris.length);
-
-    setLoadingBatches((prev) => new Set(prev).add(batchIndex));
-
-    try {
-      const tracks = await fetchTracksMetadata(
-        trashedSongUris.slice(startIndex, endIndex),
+      const BATCH_SIZE = 50;
+      const startIndex = batchIndex * BATCH_SIZE;
+      const endIndex = Math.min(
+        startIndex + BATCH_SIZE,
+        currentTab.uris.length,
       );
-      setTrackCache((prev) => {
-        const newCache = new Map(prev);
-        tracks.forEach((track, i) => newCache.set(startIndex + i, track));
-        return newCache;
-      });
-    } catch (error) {
-      console.error("Failed to load song batch:", error);
-    } finally {
-      setLoadingBatches((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(batchIndex);
-        return newSet;
-      });
-    }
-  };
 
-  // Load batch function for artists
-  const loadArtistBatch = async (batchIndex: number) => {
-    if (loadingBatches.has(batchIndex) || activeTab !== "artists") return;
+      setLoadingBatches((prev) => new Set(prev).add(batchKey));
 
-    const BATCH_SIZE = 50;
-    const startIndex = batchIndex * BATCH_SIZE;
-    const endIndex = Math.min(
-      startIndex + BATCH_SIZE,
-      trashedArtistUris.length,
-    );
+      try {
+        const urisSlice = currentTab.uris.slice(startIndex, endIndex);
+        const data =
+          activeTab === "songs"
+            ? await fetchTracksMetadata(urisSlice)
+            : await fetchArtistsMetadata(urisSlice);
 
-    setLoadingBatches((prev) => new Set(prev).add(batchIndex));
-
-    try {
-      const artists = await fetchArtistsMetadata(
-        trashedArtistUris.slice(startIndex, endIndex),
-      );
-      setArtistCache((prev) => {
-        const newCache = new Map(prev);
-        artists.forEach((artist, i) => newCache.set(startIndex + i, artist));
-        return newCache;
-      });
-    } catch (error) {
-      console.error("Failed to load artist batch:", error);
-    } finally {
-      setLoadingBatches((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(batchIndex);
-        return newSet;
-      });
-    }
-  };
+        setItemCache((prev) => {
+          const newCache = new Map(prev);
+          const tabCache = new Map(newCache.get(activeTab));
+          data.forEach((item, i) => tabCache.set(startIndex + i, item));
+          newCache.set(activeTab, tabCache);
+          return newCache;
+        });
+      } catch (error) {
+        console.error(`Failed to load ${activeTab} batch:`, error);
+      } finally {
+        setLoadingBatches((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(batchKey);
+          return newSet;
+        });
+      }
+    },
+    [activeTab, currentTab.uris, loadingBatches],
+  );
 
   // Load visible items
   useEffect(() => {
@@ -235,29 +216,40 @@ export const TrashedItemsView: React.FC = () => {
       }
     });
 
-    if (activeTab === "songs") {
-      batchesToLoad.forEach(loadSongBatch);
-    } else {
-      batchesToLoad.forEach(loadArtistBatch);
-    }
-  }, [
-    virtualizer.getVirtualItems(),
-    currentCache,
-    currentItems.length,
-    activeTab,
-  ]);
+    batchesToLoad.forEach(loadBatch);
+  }, [virtualizer.getVirtualItems(), currentCache, loadBatch]);
 
+  // Clear cache when tab changes or data changes
   useEffect(() => {
     setLoadingBatches(new Set());
   }, [activeTab]);
 
   useEffect(() => {
-    setTrackCache(new Map());
+    setItemCache((prev) => {
+      const newCache = new Map(prev);
+      newCache.set("songs", new Map());
+      return newCache;
+    });
   }, [trashedSongUris]);
 
   useEffect(() => {
-    setArtistCache(new Map());
+    setItemCache((prev) => {
+      const newCache = new Map(prev);
+      newCache.set("artists", new Map());
+      return newCache;
+    });
   }, [trashedArtistUris]);
+
+  const handleUntrash = useCallback(
+    (uri: string) => {
+      if (activeTab === "songs") {
+        toggleSongTrash(uri, false);
+      } else {
+        toggleArtistTrash(uri, false);
+      }
+    },
+    [activeTab, toggleSongTrash, toggleArtistTrash],
+  );
 
   const hasItems = trashedSongUris.length > 0 || trashedArtistUris.length > 0;
 
@@ -269,21 +261,18 @@ export const TrashedItemsView: React.FC = () => {
 
       {/* Tab Navigation */}
       <div className="!mb-4 flex border-b border-white/10">
-        <TabButton
-          label="Songs"
-          count={trashedSongUris.length}
-          isActive={activeTab === "songs"}
-          onClick={() => setActiveTab("songs")}
-        />
-        <TabButton
-          label="Artists"
-          count={trashedArtistUris.length}
-          isActive={activeTab === "artists"}
-          onClick={() => setActiveTab("artists")}
-        />
+        {tabs.map((tab) => (
+          <TabButton
+            key={tab.key}
+            label={tab.label}
+            count={tab.count}
+            isActive={activeTab === tab.key}
+            onClick={() => setActiveTab(tab.key)}
+          />
+        ))}
       </div>
 
-      {currentItems.length === 0 ? (
+      {currentTab.uris.length === 0 ? (
         <EmptyState type={activeTab} />
       ) : (
         <>
@@ -312,17 +301,7 @@ export const TrashedItemsView: React.FC = () => {
                     }}
                   >
                     {data ? (
-                      activeTab === "songs" ? (
-                        <TrackRow
-                          track={data as TrackDisplayData}
-                          onUntrash={(uri) => toggleSongTrash(uri, false)}
-                        />
-                      ) : (
-                        <ArtistRow
-                          artist={data as ArtistDisplayData}
-                          onUntrash={(uri) => toggleArtistTrash(uri, false)}
-                        />
-                      )
+                      <ItemRow item={data} onUntrash={handleUntrash} />
                     ) : (
                       <div className="flex h-full items-center justify-center">
                         <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/20 border-t-white/60" />
@@ -336,7 +315,7 @@ export const TrashedItemsView: React.FC = () => {
 
           <div className="!py-4 text-center">
             <p className="text-sm text-white/40">
-              {currentCache.size} of {currentItems.length} {activeTab} loaded
+              {currentCache.size} of {currentTab.uris.length} {activeTab} loaded
             </p>
           </div>
         </>
