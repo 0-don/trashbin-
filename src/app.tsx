@@ -11,6 +11,7 @@ import {
   skipToNextAllowedTrack,
 } from "./lib/track-utils";
 import { useTrashbinStore } from "./store/trashbin-store";
+import { TrashedItemsModal } from "./components/trashed-items-modal";
 
 function App() {
   const trashbinStore = useTrashbinStore();
@@ -72,6 +73,7 @@ function App() {
       {/* <div className="text-[0.5rem] text-red-500">trashbin+</div> */}
       <TrashbinWidget />
       <TrashbinSettings />
+      <TrashedItemsModal />
       <TrashbinContextMenu />
       <TrashbinTracklist />
       <TrashbinQueuelist />

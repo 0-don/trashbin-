@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import ReactDOM from "react-dom";
 import { MESSAGES, UI_TEXT } from "../lib/constants";
 import { cn } from "../lib/utils";
 import { useTrashbinStore } from "../store/trashbin-store";
@@ -188,26 +187,21 @@ export function TrashbinSettings() {
   useEffect(() => {
     if (!isOpen) return;
 
-    const container = document.createElement("div");
-    ReactDOM.render(<SettingsModal />, container);
-
     Spicetify.PopupModal.display({
       title: UI_TEXT.SETTINGS,
-      content: container,
+      content: (<SettingsModal />) as unknown as Element,
     });
 
     // Detect when modal closes
     const observer = new MutationObserver(() => {
       if (!document.querySelector(".main-trackCreditsModal-container")) {
         setIsOpen(false);
-        ReactDOM.unmountComponentAtNode(container);
       }
     });
     observer.observe(document.body, { childList: true, subtree: true });
 
     return () => {
       observer.disconnect();
-      ReactDOM.unmountComponentAtNode(container);
     };
   }, [isOpen]);
 

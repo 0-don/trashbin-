@@ -19,6 +19,7 @@ export const MESSAGES = {
 
 export const UI_TEXT = {
   TRASHBIN: "Trashbin+",
+  TRASHBIN_ITEMS: "Trashbin+ Items",
   SETTINGS: "Trashbin+ Settings",
   SUGGESTED_NAME: "spicetify-trashbin.json",
 
