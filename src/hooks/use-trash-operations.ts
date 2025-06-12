@@ -1,7 +1,8 @@
-import { MESSAGES } from "../lib/constants";
+import { useTranslation } from "react-i18next";
 import { useTrashbinStore } from "../store/trashbin-store";
 
 export const useTrashOperations = () => {
+  const { t } = useTranslation();
   const store = useTrashbinStore();
 
   const handleTrashToggle = (uris: string[]) => {
@@ -26,7 +27,7 @@ export const useTrashOperations = () => {
 
   const getContextMenuLabel = (uri: string): string => {
     const { isTrashed } = store.getTrashStatus(uri);
-    return isTrashed ? MESSAGES.UNTHROW : MESSAGES.THROW;
+    return isTrashed ? t("ACTION_UNTHROW") : t("ACTION_THROW");
   };
 
   return {

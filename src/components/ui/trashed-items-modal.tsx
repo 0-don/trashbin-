@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { BsTrash3 } from "react-icons/bs";
-import { UI_TEXT } from "../lib/constants";
-import { TrashedItemsView } from "./trashed-items-view";
+import { SELECTORS } from "../../lib/constants";
+import { TrashedItemsView } from "../views/trashed-items";
 
 export function TrashedItemsModal() {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     const menuItem = new Spicetify.Menu.Item(
-      UI_TEXT.TRASHBIN_ITEMS,
+      t("ITEMS_TITLE"),
       false,
       () => setIsOpen(true),
       Spicetify.ReactDOMServer.renderToString(<BsTrash3 size={15} />),
@@ -21,14 +23,13 @@ export function TrashedItemsModal() {
     if (!isOpen) return;
 
     Spicetify.PopupModal.display({
-      title: UI_TEXT.TRASHBIN_ITEMS,
+      title: t("ITEMS_TITLE"),
       content: (<TrashedItemsView />) as unknown as Element,
       isLarge: true,
     });
 
-    // Detect when modal closes
     const observer = new MutationObserver(() => {
-      if (!document.querySelector(".main-trackCreditsModal-container")) {
+      if (!document.querySelector(SELECTORS.TRACK_CREDITS_MODAL_CONTAINER)) {
         setIsOpen(false);
       }
     });

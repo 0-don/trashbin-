@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { MESSAGES, UI_TEXT } from "../lib/constants";
-import { cn } from "../lib/utils";
-import { useTrashbinStore } from "../store/trashbin-store";
-import { TRASH_ICON } from "./icons";
+import { useTranslation } from "react-i18next";
+import { SELECTORS } from "../../lib/constants";
+import { cn } from "../../lib/utils";
+import { useTrashbinStore } from "../../store/trashbin-store";
+import { TRASH_ICON } from "../icons";
 
 const Toggle: React.FC<{
   label: string;
@@ -53,6 +54,7 @@ const ActionButton: React.FC<{
 );
 
 const SettingsModal: React.FC = () => {
+  const { t } = useTranslation();
   const store = useTrashbinStore();
 
   const handleFileImport = () => {
@@ -68,9 +70,9 @@ const SettingsModal: React.FC = () => {
         try {
           const data = JSON.parse(e.target?.result as string);
           store.importTrashData(data.songs || {}, data.artists || {});
-          Spicetify.showNotification(MESSAGES.BACKUP_RESTORED_SUCCESS);
+          Spicetify.showNotification(t("BACKUP_RESTORE_SUCCESS"));
         } catch {
-          Spicetify.showNotification(MESSAGES.BACKUP_RESTORED_FAILED, true);
+          Spicetify.showNotification(t("BACKUP_FILE_READ_FAILED"), true);
         }
       };
       reader.readAsText(file);
@@ -81,89 +83,89 @@ const SettingsModal: React.FC = () => {
   const handleExport = async () => {
     try {
       const handle = await window.showSaveFilePicker?.({
-        suggestedName: UI_TEXT.SUGGESTED_NAME,
+        suggestedName: t("BACKUP_SUGGESTED_FILENAME"),
         types: [{ accept: { "application/json": [".json"] } }],
       });
       const writable = await handle?.createWritable();
       await writable?.write(JSON.stringify(store.exportData()));
       await writable?.close();
-      Spicetify.showNotification(MESSAGES.BACKUP_SAVED_SUCCESS);
+      Spicetify.showNotification(t("BACKUP_SAVE_SUCCESS"));
     } catch {
-      Spicetify.showNotification(MESSAGES.BACKUP_SAVED_FAILED);
+      Spicetify.showNotification(t("BACKUP_SAVE_FAILED"));
     }
   };
 
   const handleCopy = () => {
     Spicetify.Platform.ClipboardAPI.copy(JSON.stringify(store.exportData()));
-    Spicetify.showNotification(MESSAGES.COPIED);
+    Spicetify.showNotification(t("MESSAGE_COPIED"));
   };
 
   const handleClear = () => {
     store.clearTrashbin();
-    Spicetify.showNotification(MESSAGES.TRASHBIN_CLEARED);
+    Spicetify.showNotification(t("MESSAGE_CLEARED"));
   };
 
   return (
     <div className="p-4">
       <h2 className="!my-2.5 text-lg font-bold text-[var(--spice-text)] first-of-type:mt-0">
-        {UI_TEXT.OPTIONS}
+        {t("SETTINGS_OPTIONS")}
       </h2>
       <Toggle
-        label={UI_TEXT.ENABLED}
+        label={t("SETTINGS_ENABLED")}
         enabled={store.trashbinEnabled}
         onChange={store.setTrashbinEnabled}
       />
       <Toggle
-        label={UI_TEXT.SHOW_WIDGET_ICON}
+        label={t("SETTINGS_SHOW_WIDGET")}
         enabled={store.widgetEnabled}
         onChange={store.setWidgetEnabled}
       />
 
       <h2 className="!my-2.5 text-lg font-bold text-[var(--spice-text)] first-of-type:mt-0">
-        {UI_TEXT.FEATURES}
+        {t("SETTINGS_FEATURES")}
       </h2>
       <Toggle
-        label={UI_TEXT.AUTOPLAY_ON_START}
+        label={t("SETTINGS_AUTOPLAY")}
         enabled={store.autoplayOnStart}
         onChange={store.setAutoplayOnStart}
       />
       <Toggle
-        label={UI_TEXT.QUEUE_TRASHBIN}
+        label={t("SETTINGS_QUEUE_TRASHBIN")}
         enabled={store.queueTrashbinEnabled}
         onChange={store.setQueueTrashbinEnabled}
       />
       <Toggle
-        label={UI_TEXT.TRACKLIST_TRASHBIN}
+        label={t("SETTINGS_TRACKLIST_TRASHBIN")}
         enabled={store.tracklistTrashbinEnabled}
         onChange={store.setTracklistTrashbinEnabled}
       />
       <Toggle
-        label={UI_TEXT.RESHUFFLE_ON_SKIP}
+        label={t("SETTINGS_RESHUFFLE_ON_SKIP")}
         enabled={store.reshuffleOnSkip}
         onChange={store.setReshuffleOnSkip}
       />
 
       <h2 className="!my-2.5 text-lg font-bold text-[var(--spice-text)] first-of-type:mt-0">
-        {UI_TEXT.LOCAL_STORAGE}
+        {t("SETTINGS_LOCAL_STORAGE")}
       </h2>
       <ActionButton
-        label={UI_TEXT.COPY}
-        description={UI_TEXT.COPY_DESCRIPTION}
+        label={t("ACTION_COPY")}
+        description={t("DESCRIPTION_COPY")}
         onClick={handleCopy}
       />
       <ActionButton
-        label={UI_TEXT.EXPORT}
-        description={UI_TEXT.EXPORT_DESCRIPTION}
+        label={t("ACTION_EXPORT")}
+        description={t("DESCRIPTION_EXPORT")}
         onClick={handleExport}
       />
       <ActionButton
-        label={UI_TEXT.IMPORT}
-        description={UI_TEXT.IMPORT_DESCRIPTION}
+        label={t("ACTION_IMPORT")}
+        description={t("DESCRIPTION_IMPORT")}
         onClick={handleFileImport}
       />
       <ActionButton
-        label={UI_TEXT.CLEAR}
-        description={UI_TEXT.CLEAR_DESCRIPTION}
+        label={t("ACTION_CLEAR")}
+        description={t("DESCRIPTION_CLEAR")}
         onClick={handleClear}
       />
     </div>
@@ -171,11 +173,12 @@ const SettingsModal: React.FC = () => {
 };
 
 export function TrashbinSettings() {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     const menuItem = new Spicetify.Menu.Item(
-      UI_TEXT.TRASHBIN,
+      t("TRASHBIN_NAME"),
       false,
       () => setIsOpen(true),
       TRASH_ICON(15),
@@ -188,13 +191,12 @@ export function TrashbinSettings() {
     if (!isOpen) return;
 
     Spicetify.PopupModal.display({
-      title: UI_TEXT.SETTINGS,
+      title: t("SETTINGS_TITLE"),
       content: (<SettingsModal />) as unknown as Element,
     });
 
-    // Detect when modal closes
     const observer = new MutationObserver(() => {
-      if (!document.querySelector(".main-trackCreditsModal-container")) {
+      if (!document.querySelector(SELECTORS.TRACK_CREDITS_MODAL_CONTAINER)) {
         setIsOpen(false);
       }
     });

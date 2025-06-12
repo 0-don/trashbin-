@@ -1,9 +1,10 @@
 import { useEffect, useRef } from "react";
-import { useTrashOperations } from "../hooks/use-trash-operations";
-import { MESSAGES } from "../lib/constants";
-import { TRASH_ICON } from "./icons";
+import { useTranslation } from "react-i18next";
+import { useTrashOperations } from "../../hooks/use-trash-operations";
+import { TRASH_ICON } from "../icons";
 
 export function TrashbinContextMenu() {
+  const { t } = useTranslation();
   const { handleTrashToggle, shouldAddContextMenu, getContextMenuLabel } =
     useTrashOperations();
   const contextMenuItemRef = useRef<{ name: string } | null>(null);
@@ -20,7 +21,7 @@ export function TrashbinContextMenu() {
 
   useEffect(() => {
     const contextMenuItem = new Spicetify.ContextMenu.Item(
-      MESSAGES.THROW,
+      t("ACTION_THROW"),
       handleTrashToggle,
       shouldAddContextMenuWithUpdate,
       TRASH_ICON(15),

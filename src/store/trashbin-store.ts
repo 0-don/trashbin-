@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { MESSAGES } from "../lib/constants";
+import { i18n } from "../components/providers/providers";
 import { shouldSkipTrack } from "../lib/track-utils";
 
 export const STORAGE_KEYS = {
@@ -142,12 +142,12 @@ export const useTrashbinStore = create<TrashbinState>((set, get) => ({
     if (isTrashed) {
       delete newList[uri];
       if (showNotification) {
-        Spicetify.showNotification(MESSAGES.SONG_REMOVED);
+        Spicetify.showNotification(i18n.t("MESSAGE_SONG_REMOVED"));
       }
     } else {
       newList[uri] = true;
       if (showNotification) {
-        Spicetify.showNotification(MESSAGES.SONG_ADDED);
+        Spicetify.showNotification(i18n.t("MESSAGE_SONG_ADDED"));
       }
 
       const currentSpotifyTrack = Spicetify.Player.data?.item;
@@ -172,12 +172,12 @@ export const useTrashbinStore = create<TrashbinState>((set, get) => ({
     if (isTrashed) {
       delete newList[uri];
       if (showNotification) {
-        Spicetify.showNotification(MESSAGES.ARTIST_REMOVED);
+        Spicetify.showNotification(i18n.t("MESSAGE_ARTIST_REMOVED"));
       }
     } else {
       newList[uri] = true;
       if (showNotification) {
-        Spicetify.showNotification(MESSAGES.ARTIST_ADDED);
+        Spicetify.showNotification(i18n.t("MESSAGE_ARTIST_ADDED"));
       }
 
       const currentSpotifyTrack = Spicetify.Player.data?.item;

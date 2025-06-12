@@ -1,9 +1,10 @@
 import React, { useEffect, useRef } from "react";
-import { MESSAGES } from "../lib/constants";
-import { useTrashbinStore } from "../store/trashbin-store";
-import { TRASH_ICON } from "./icons";
+import { useTranslation } from "react-i18next";
+import { useTrashbinStore } from "../../store/trashbin-store";
+import { TRASH_ICON } from "../icons";
 
 export const TrashbinWidget = React.memo(() => {
+  const { t } = useTranslation();
   const store = useTrashbinStore();
   const widgetRef = useRef<Spicetify.Playbar.Widget | null>(null);
 
@@ -18,7 +19,7 @@ export const TrashbinWidget = React.memo(() => {
 
     if (isTrack) {
       widget.active = isTrashed;
-      widget.label = isTrashed ? MESSAGES.UNTHROW : MESSAGES.THROW;
+      widget.label = isTrashed ? t("ACTION_UNTHROW") : t("ACTION_THROW");
     } else {
       widget.deregister();
     }
@@ -26,7 +27,7 @@ export const TrashbinWidget = React.memo(() => {
 
   useEffect(() => {
     const widget = new Spicetify.Playbar.Widget(
-      MESSAGES.THROW,
+      t("ACTION_THROW"),
       TRASH_ICON(18),
       () => {
         const currentTrack = Spicetify.Player.data?.item;

@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useEffect } from "react";
 import { TRASH_ICON } from "../components/icons";
 import { extractTrackData } from "../lib/track-utils";
 import { useTrashbinStore } from "../store/trashbin-store";
@@ -18,13 +18,13 @@ export const useTrashButtonInjection = (
 ) => {
   const store = useTrashbinStore();
 
-  const removeTrashButtons = useCallback(() => {
+  const removeTrashButtons = () => {
     document
       .querySelectorAll(config.buttonSelector)
       .forEach((btn) => btn.remove());
-  }, [config.buttonSelector]);
+  };
 
-  const injectTrashButtons = useCallback(() => {
+  const injectTrashButtons = () => {
     // Remove existing buttons first
     removeTrashButtons();
 
@@ -57,7 +57,7 @@ export const useTrashButtonInjection = (
 
       moreBtn.parentElement?.insertBefore(btn, moreBtn);
     });
-  }, [config, store, enabled, removeTrashButtons]);
+  };
 
   // Remove buttons when disabled
   useEffect(() => {

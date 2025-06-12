@@ -1,4 +1,5 @@
 import { useTrashbinStore } from "../store/trashbin-store";
+import { SELECTORS } from "./constants";
 
 const TRACK_URI_REGEX = /spotify:track:([a-zA-Z0-9]+)/;
 
@@ -41,7 +42,7 @@ export function extractTrackData(element: Element): TrackData {
   }
 
   const artistURIs = Array.from(
-    element.querySelectorAll<HTMLAnchorElement>('a[href*="/artist/"]'),
+    element.querySelectorAll<HTMLAnchorElement>(SELECTORS.ARTIST_LINK),
   )
     .map((a) => a.href.match(/\/artist\/([a-zA-Z0-9]+)/)?.[1])
     .filter((id): id is string => Boolean(id))

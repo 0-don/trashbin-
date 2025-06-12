@@ -1,17 +1,19 @@
 import React, { useEffect } from "react";
 import ReactDOM from "react-dom";
-import { TrashbinContextMenu } from "./components/trashbin-context-menu";
-import { TrashbinQueuelist } from "./components/trashbin-queuelist";
-import { TrashbinSettings } from "./components/trashbin-settings";
-import { TrashbinTracklist } from "./components/trashbin-tracklist";
-import { TrashbinWidget } from "./components/trashbin-widget";
+import { TrashbinQueuelist } from "./components/features/injections/trashbin-queuelist";
+import { TrashbinTracklist } from "./components/features/injections/trashbin-tracklist";
+import { TrashbinContextMenu } from "./components/features/trashbin-context-menu";
+import { TrashbinWidget } from "./components/features/trashbin-widget";
+import { Providers } from "./components/providers/providers";
+import { TrashbinSettings } from "./components/ui/settings-modal";
+import { TrashedItemsModal } from "./components/ui/trashed-items-modal";
 import "./global.css";
+import { SELECTORS } from "./lib/constants";
 import {
   isTrackEffectivelyTrashed,
   skipToNextAllowedTrack,
 } from "./lib/track-utils";
 import { useTrashbinStore } from "./store/trashbin-store";
-import { TrashedItemsModal } from "./components/trashed-items-modal";
 
 function App() {
   const trashbinStore = useTrashbinStore();
@@ -29,10 +31,8 @@ function App() {
     if (!trashbinStore.trashbinEnabled) return;
 
     const skipBackBtn =
-      document.querySelector(".main-skipBackButton-button") ??
-      document.querySelector(
-        ".player-controls__left > button[data-encore-id='buttonTertiary']",
-      );
+      document.querySelector(SELECTORS.SKIP_BACK_BUTTON) ??
+      document.querySelector(SELECTORS.SKIP_BACK_BUTTON_ALT);
 
     const eventListener = () => trashbinStore.setUserHitBack(true);
 
@@ -71,12 +71,14 @@ function App() {
   return (
     <>
       {/* <div className="text-[0.5rem] text-red-500">trashbin+</div> */}
-      <TrashbinWidget />
-      <TrashbinSettings />
-      <TrashedItemsModal />
-      <TrashbinContextMenu />
-      <TrashbinTracklist />
-      <TrashbinQueuelist />
+      <Providers>
+        <TrashbinWidget />
+        <TrashbinSettings />
+        <TrashedItemsModal />
+        <TrashbinContextMenu />
+        <TrashbinTracklist />
+        <TrashbinQueuelist />
+      </Providers>
     </>
   );
 }
@@ -92,6 +94,7 @@ async function main() {
   console.log(
     "Spicetify is ready! Attaching Trashbin+ React component.",
     Spicetify,
+    Spicetify.Locale.getLocale(),
   );
 
   return () => {
