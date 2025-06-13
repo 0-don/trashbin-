@@ -23,7 +23,9 @@ const Toggle: React.FC<{
         onClick={() => onChange(!enabled)}
       >
         <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor">
-          <path d="M8.797 2.5a.5.5 0 0 0-.594 0L2.5 6.5v7a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-7l-5.703-4z" />
+          {enabled && (
+            <path d="M8.797 2.5a.5.5 0 0 0-.594 0L2.5 6.5v7a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-7l-5.703-4z" />
+          )}
         </svg>
       </button>
     </div>
