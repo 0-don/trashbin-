@@ -5,6 +5,9 @@ export const SELECTORS = {
   ARTIST_LINK: 'a[href*="/artist/"]',
   TRACK_CREDITS_MODAL: ".main-trackCreditsModal-mainSection",
   TRACK_CREDITS_MODAL_CONTAINER: ".main-trackCreditsModal-container",
+
+  SMART_SHUFFLE_ICON:
+    'p[data-encore-id="listRowSubtitle"] svg[data-encore-id="icon"]',
 } as const;
 
 export const TRACKLIST_CONFIG = {
@@ -14,7 +17,6 @@ export const TRACKLIST_CONFIG = {
   moreButtonSelector: ".main-trackList-rowMoreButton",
   buttonClassName: "trashbin-tracklist-btn",
 } as const;
-
 
 export const QUEUELIST_CONFIG = {
   containerSelector: "#Desktop_PanelContainer_Id",
