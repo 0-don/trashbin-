@@ -2,10 +2,14 @@ import { useTrashbinStore } from "../store/trashbin-store";
 import { SELECTORS } from "./constants";
 
 const TRACK_URI_REGEX = /spotify:track:([a-zA-Z0-9]+)/;
+const ENHANCED_RECOMMENDATION_REGEX = /enhanced_recommendation/;
+const UID_REGEX = /"uid":\s*"([^"]+)"/;
 
 export interface TrackData {
   trackURI: string | null;
+  uid: string | null;
   artistURIs: string[];
+  isEnhancedRecommendation: boolean;
 }
 
 interface ReactFiber {
@@ -20,6 +24,8 @@ interface ElementWithFiber extends Element {
 
 export function extractTrackData(element: Element): TrackData {
   let trackURI: string | null = null;
+  let isEnhancedRecommendation = false;
+  let uid: string | null = null;
 
   const elementWithFiber = element as ElementWithFiber;
   const reactKey = Object.keys(elementWithFiber).find((k) =>
@@ -29,11 +35,26 @@ export function extractTrackData(element: Element): TrackData {
   if (reactKey) {
     let fiber = elementWithFiber[reactKey] as ReactFiber | undefined;
 
-    while (fiber && !trackURI) {
+    while (fiber && (!trackURI || !isEnhancedRecommendation || !uid)) {
       try {
         const props = fiber.memoizedProps ?? fiber.props ?? {};
-        const match = JSON.stringify(props).match(TRACK_URI_REGEX);
-        if (match?.[0]) trackURI = match[0];
+        const propsString = JSON.stringify(props);
+
+        if (!trackURI) {
+          const match = propsString.match(TRACK_URI_REGEX);
+          if (match?.[0]) trackURI = match[0];
+        }
+
+        if (!isEnhancedRecommendation) {
+          isEnhancedRecommendation =
+            ENHANCED_RECOMMENDATION_REGEX.test(propsString);
+        }
+
+        if (!uid) {
+          const uidMatch = propsString.match(UID_REGEX);
+          if (uidMatch?.[1]) uid = uidMatch[1];
+        }
+
         fiber = fiber.return;
       } catch {
         break;
@@ -48,7 +69,7 @@ export function extractTrackData(element: Element): TrackData {
     .filter((id): id is string => Boolean(id))
     .map((id) => `spotify:artist:${id}`);
 
-  return { trackURI, artistURIs };
+  return { trackURI, uid,  artistURIs, isEnhancedRecommendation};
 }
 
 export function isTrackEffectivelyTrashed(

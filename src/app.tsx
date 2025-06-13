@@ -10,6 +10,7 @@ import { TrashedItemsModal } from "./components/ui/trashed-items-modal";
 import "./global.css";
 import { SELECTORS } from "./lib/constants";
 import {
+  extractTrackData,
   isTrackEffectivelyTrashed,
   skipToNextAllowedTrack,
 } from "./lib/track-utils";
@@ -19,22 +20,17 @@ async function clearQueue() {
   const queue = Spicetify.Queue;
   if (!queue?.nextTracks?.length) return true;
 
-  const nextTracksToRemove = queue.nextTracks.map(({ contextTrack }) => ({
-    uri: contextTrack.uri,
-    uid: contextTrack.uid,
-  }));
-  const previusTracksToRemove = queue.prevTracks.map(({ contextTrack }) => ({
-    uri: contextTrack.uri,
-    uid: contextTrack.uid,
-  }));
-
-  const currentTrack = Spicetify.Player.data?.item;
-
-  const tracks = [
-    ...nextTracksToRemove,
-    ...previusTracksToRemove,
-    ...(currentTrack ? [{ uri: currentTrack.uri, uid: currentTrack.uid }] : []),
-  ];
+  const tracks = Array.from(
+    document.querySelectorAll('#Desktop_PanelContainer_Id [role="row"]'),
+  )
+    .map((el) => extractTrackData(el))
+    .filter(
+      (track) => track.trackURI && track.uid && !track.isEnhancedRecommendation,
+    )
+    .map((track) => ({
+      uri: track.trackURI!,
+      uid: track.uid!,
+    }));
 
   await Spicetify.removeFromQueue(tracks);
 }
