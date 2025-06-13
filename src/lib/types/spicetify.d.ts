@@ -173,6 +173,7 @@ declare namespace Spicetify {
 		metadata?: Metadata;
 	};
 	type PlayerState = {
+    context_uri: string;
 		timestamp: number;
 		context: PlayerContext;
 		index: PlayerIndex;
@@ -197,6 +198,7 @@ declare namespace Spicetify {
 		uri: string;
 		url: string;
 		metadata: {
+      context_description: string;
 			"player.arch": string;
 		};
 	};

@@ -15,6 +15,65 @@ import {
 } from "./lib/track-utils";
 import { useTrashbinStore } from "./store/trashbin-store";
 
+async function restartCurrentPlaylist(): Promise<void> {
+  const playerData = Spicetify.Player.data;
+
+  if (!playerData?.item) {
+    Spicetify.showNotification("No track is currently playing.", true);
+    return;
+  }
+
+  const contextUriString = playerData.context_uri || playerData.context?.uri;
+  if (!contextUriString) {
+    Spicetify.showNotification(
+      "Not currently playing from a playlist or album context.",
+      true,
+    );
+    return;
+  }
+
+  const contextUri = Spicetify.URI.fromString(contextUriString);
+  if (
+    contextUri.type !== Spicetify.URI.Type.PLAYLIST &&
+    contextUri.type !== Spicetify.URI.Type.PLAYLIST_V2
+  ) {
+    Spicetify.showNotification("Not currently playing from a playlist.", true);
+    return;
+  }
+
+  const playlistId = contextUri.id;
+  if (!playlistId) {
+    Spicetify.showNotification("Could not extract playlist ID.", true);
+    return;
+  }
+
+  try {
+    // Clear queue
+    const playerAPI = Spicetify.Platform?.PlayerAPI;
+    if (playerAPI?.clearQueue) {
+      await playerAPI.clearQueue();
+    } else if (playerAPI?._queue?.clearQueue) {
+      await playerAPI._queue.clearQueue();
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
+    // Restart playlist
+    await Spicetify.Player.playUri(
+      contextUriString,
+      { uri: contextUriString },
+      { skipTo: { index: 0 } },
+    );
+
+    Spicetify.showNotification(
+      `Playlist restarted: ${playerData.context?.metadata?.context_description || playlistId}`,
+    );
+  } catch (error) {
+    Spicetify.showNotification("Error restarting playlist.", true);
+    console.error("Error during playlist restart:", error);
+  }
+}
+
 function App() {
   const trashbinStore = useTrashbinStore();
 
@@ -26,6 +85,13 @@ function App() {
     if (trashbinStore.autoplayOnStart && !Spicetify.Player.isPlaying())
       Spicetify.Player.play();
   }, [trashbinStore.autoplayOnStart]);
+
+  useEffect(() => {
+    console.log(
+      "Spicetify Player shuffle state:",
+      Spicetify.Player.getShuffle(),
+    );
+  }, [Spicetify.Player.getShuffle, Spicetify.Player.data?.shuffle]);
 
   useEffect(() => {
     if (!trashbinStore.trashbinEnabled) return;
@@ -70,7 +136,12 @@ function App() {
 
   return (
     <>
-      {/* <div className="text-[0.5rem] text-red-500">trashbin+</div> */}
+      <div
+        onClick={restartCurrentPlaylist}
+        className="z-50 !cursor-pointer text-red-500"
+      >
+        trashbin+
+      </div>
       <Providers>
         <TrashbinWidget />
         <TrashbinSettings />
@@ -86,7 +157,7 @@ function App() {
 async function main() {
   const appRoot = document.createElement("div");
   appRoot.id = "trashbin-plus-root";
-  appRoot.className = "fixed top-0 left-0 z-50 pointer-events-none";
+  appRoot.className = "fixed top-0 left-0 !z-[9999] pointer-events-none";
 
   document.body.appendChild(appRoot);
   ReactDOM.render(<App />, appRoot);
