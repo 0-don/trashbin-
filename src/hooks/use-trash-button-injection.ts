@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { TRASH_ICON } from "../components/icons";
-import { extractTrackData } from "../lib/track-utils";
+import { extractTrackData, manageSmartShuffleQueue } from "../lib/track-utils";
 import { useTrashbinStore } from "../store/trashbin-store";
 import { useMutationObserver } from "./use-mutation-observer";
 
@@ -24,7 +24,7 @@ export const useTrashButtonInjection = (
       .forEach((btn) => btn.remove());
   };
 
-  const injectTrashButtons = () => {
+  const injectTrashButtons = async () => {
     // Remove existing buttons first
     removeTrashButtons();
 
@@ -33,6 +33,8 @@ export const useTrashButtonInjection = (
 
     const container = document.querySelector(config.containerSelector);
     if (!container) return;
+
+    await manageSmartShuffleQueue();
 
     container.querySelectorAll(config.moreButtonSelector).forEach((moreBtn) => {
       const row = moreBtn.closest(config.rowSelector);

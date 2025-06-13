@@ -1,5 +1,5 @@
 import { useTrashbinStore } from "../store/trashbin-store";
-import { SELECTORS } from "./constants";
+import { QUEUELIST_CONFIG, SELECTORS } from "./constants";
 
 const TRACK_URI_REGEX = /spotify:track:([a-zA-Z0-9]+)/;
 const ENHANCED_RECOMMENDATION_REGEX = /enhanced_recommendation/;
@@ -69,7 +69,7 @@ export function extractTrackData(element: Element): TrackData {
     .filter((id): id is string => Boolean(id))
     .map((id) => `spotify:artist:${id}`);
 
-  return { trackURI, uid,  artistURIs, isEnhancedRecommendation};
+  return { trackURI, uid, artistURIs, isEnhancedRecommendation };
 }
 
 export function isTrackEffectivelyTrashed(
@@ -159,4 +159,42 @@ export function shouldSkipTrack(uri: string, type: string): boolean {
   }
 
   return false;
+}
+
+export async function manageSmartShuffleQueue(): Promise<void> {
+  if (!document.querySelector(SELECTORS.SMART_SHUFFLE_BUTTON)) return;
+
+  const queueTracks = Array.from(
+    document.querySelectorAll(
+      `${QUEUELIST_CONFIG.containerSelector} ${QUEUELIST_CONFIG.rowSelector}`,
+    ),
+  )
+    .map(extractTrackData)
+    .filter((track) => track.uid); // Only queue tracks (not recently played)
+
+  if (queueTracks.length === 0) return;
+
+  const enhancedRecommendations = queueTracks.filter(
+    (track) => track.isEnhancedRecommendation,
+  );
+
+  if (enhancedRecommendations.length <= 4) {
+    const queue = Spicetify.Queue;
+    if (!queue?.nextTracks?.length) return;
+
+    const tracksToRemove = queueTracks
+      .filter((track) => track.trackURI && !track.isEnhancedRecommendation)
+      .map((track) => ({
+        uri: track.trackURI!,
+        uid: track.uid!,
+      }));
+
+    await Spicetify.removeFromQueue(tracksToRemove);
+
+    // Wait 1 second before checking again
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    // Recursively call until we have more than 4 enhanced recommendations
+    await manageSmartShuffleQueue();
+  }
 }

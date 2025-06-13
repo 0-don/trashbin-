@@ -6,10 +6,7 @@ export const SELECTORS = {
   TRACK_CREDITS_MODAL: ".main-trackCreditsModal-mainSection",
   TRACK_CREDITS_MODAL_CONTAINER: ".main-trackCreditsModal-container",
 
-  SMART_SHUFFLE_QUEUE_ICON:
-    'p[data-encore-id="listRowSubtitle"] svg[data-encore-id="icon"]',
   SMART_SHUFFLE_BUTTON: 'button svg path[d^="M4.502 0a.637"]',
-  QUEUE_SIDEBAR_BUTTON: '[data-testid="control-button-queue"]',
 } as const;
 
 export const TRACKLIST_CONFIG = {
