@@ -28,13 +28,6 @@ function App() {
   }, [trashbinStore.autoplayOnStart]);
 
   useEffect(() => {
-    console.log(
-      "Spicetify Player shuffle state:",
-      Spicetify.Player.getShuffle(),
-    );
-  }, [Spicetify.Player.getShuffle, Spicetify.Player.data?.shuffle]);
-
-  useEffect(() => {
     if (!trashbinStore.trashbinEnabled) return;
 
     const skipBackBtn =
@@ -102,12 +95,6 @@ async function main() {
 
   document.body.appendChild(appRoot);
   ReactDOM.render(<App />, appRoot);
-
-  console.log(
-    "Spicetify is ready! Attaching Trashbin+ React component.",
-    Spicetify,
-    Spicetify.Locale.getLocale(),
-  );
 
   return () => {
     ReactDOM.unmountComponentAtNode(appRoot);
