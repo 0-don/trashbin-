@@ -10,30 +10,10 @@ import { TrashedItemsModal } from "./components/ui/trashed-items-modal";
 import "./global.css";
 import { SELECTORS } from "./lib/constants";
 import {
-  extractTrackData,
   isTrackEffectivelyTrashed,
   skipToNextAllowedTrack,
 } from "./lib/track-utils";
 import { useTrashbinStore } from "./store/trashbin-store";
-
-async function clearQueue() {
-  const queue = Spicetify.Queue;
-  if (!queue?.nextTracks?.length) return true;
-
-  const tracks = Array.from(
-    document.querySelectorAll('#Desktop_PanelContainer_Id [role="row"]'),
-  )
-    .map((el) => extractTrackData(el))
-    .filter(
-      (track) => track.trackURI && track.uid && !track.isEnhancedRecommendation,
-    )
-    .map((track) => ({
-      uri: track.trackURI!,
-      uid: track.uid!,
-    }));
-
-  await Spicetify.removeFromQueue(tracks);
-}
 
 function App() {
   const trashbinStore = useTrashbinStore();
@@ -97,12 +77,12 @@ function App() {
 
   return (
     <>
-      <div
-        onClick={clearQueue}
+      {/* <div
+        onClick={manageSmartShuffleQueue}
         className="pointer-events-auto cursor-pointer text-red-500"
       >
         trashbin+
-      </div>
+      </div> */}
       <Providers>
         <TrashbinWidget />
         <TrashbinSettings />
