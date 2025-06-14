@@ -40,6 +40,13 @@ function App() {
       const track = Spicetify.Player.data?.item;
       const state = useTrashbinStore.getState();
 
+      // dont skip if connected to remote device
+      if (
+        Spicetify.Platform.ConnectAPI.state.activeDevice.id !== "local_device"
+      ) {
+        return;
+      }
+
       if (state.userHitBack) {
         trashbinStore.setUserHitBack(false);
         return;
