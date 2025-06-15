@@ -178,7 +178,7 @@ export async function manageSmartShuffleQueue(): Promise<void> {
     (track) => track.isEnhancedRecommendation,
   );
 
-  if (enhancedRecommendations.length <= 4) {
+  if (queueTracks.length > 4 && enhancedRecommendations.length <= 4) {
     const queue = Spicetify.Queue;
     if (!queue?.nextTracks?.length) return;
 
