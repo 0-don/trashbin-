@@ -178,7 +178,11 @@ export async function manageSmartShuffleQueue(): Promise<void> {
     (track) => track.isEnhancedRecommendation,
   );
 
-  if (queueTracks.length > 4 && enhancedRecommendations.length <= 4) {
+  if (
+    queueTracks.length > 4 &&
+    enhancedRecommendations.length <= 4 &&
+    queueTracks.length > enhancedRecommendations.length
+  ) {
     const queue = Spicetify.Queue;
     if (!queue?.nextTracks?.length) return;
 
@@ -189,12 +193,11 @@ export async function manageSmartShuffleQueue(): Promise<void> {
         uid: track.uid!,
       }));
 
+    // Exit if no tracks to remove (prevent infinite loop)
+    if (tracksToRemove.length === 0) return;
+
     await Spicetify.removeFromQueue(tracksToRemove);
-
-    // Wait 1 second before checking again
     await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // Recursively call until we have more than 4 enhanced recommendations
     await manageSmartShuffleQueue();
   }
 }
