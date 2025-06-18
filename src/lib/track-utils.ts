@@ -187,7 +187,12 @@ export async function manageSmartShuffleQueue(): Promise<void> {
     if (!queue?.nextTracks?.length) return;
 
     const tracksToRemove = queueTracks
-      .filter((track) => track.trackURI && !track.isEnhancedRecommendation)
+      .filter(
+        (track) =>
+          track.trackURI &&
+          !track.isEnhancedRecommendation &&
+          useTrashbinStore.getState().getTrashStatus(track.trackURI).isTrashed,
+      )
       .map((track) => ({
         uri: track.trackURI!,
         uid: track.uid!,
